@@ -198,7 +198,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
         rich_response.addSuggestions(['Delegated Proof-of-Stake Consensus', 'Price-Stable Cryptocurrencies', 'Decentralized Asset Exchange', 'Industrial Performance and Scalability', 'Dynamic Account Permissions', 'Recurring & Scheduled Payments', 'Referral Rewards Program', 'User-Issued Assets', 'Stakeholder-Approved Project Funding', 'Transferable Named Accounts', 'Help', 'Quit']);
       }
 
-      //app.ask(card); // Sending the details to the user, awaiting input!
+      //app.ask(rich_response); // Sending the details to the user, awaiting input!
       app.tell(rich_response); // Sending the details to the user, awaiting input!
     }
 
@@ -224,9 +224,9 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
         `Life Time Membership check.` +
         `</speak>`;
 
-      //const textToSpeech2 = `<speak>` +
-      //  `.` +
-      //  `</speak>`;
+      const textToSpeech2 = `<speak>` +
+        `What do you want to find out about an account?` +
+        `</speak>`;
 
       const displayText1 = `Available Account Functionality:` +
       `Account's basic overview.` +
@@ -236,23 +236,23 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       `Account's call positions.` +
       `Life Time Membership check.`;
 
-      //const displayText2 = `Placeholder`;
+      const displayText2 = `What do you want to find out about an account?`;
 
       card.addSimpleResponse({
         speech: textToSpeech1,
         displayText: displayText1
       });
 
-      //card.addSimpleResponse({
-      //  speech: textToSpeech2,
-      //  displayText: displayText2
-      //});
+      card.addSimpleResponse({
+        speech: textToSpeech2,
+        displayText: displayText2
+      });
 
       if (hasScreen === true) {
         card.addSuggestions([`Account's Basic Overview`, 'Account Balances', `Account's Open Orders`, `Account's Trade History`, `Account's Call Positions`, 'Help', 'Quit']);
       }
 
-      app.ask(card); // Sending the details to the user, awaiting input!
+      app.ask(rich_response); // Sending the details to the user, awaiting input!
     }
 
     function account_Balances(app) {
@@ -288,6 +288,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
 
             var text = ``;
             var voice = ``;
+            var many_balances = false;
             const account_balances = body.balances; // This var holds the account's balance array, retrieved from the HUG server.
 
             if (Array.isArray(genres)) {
@@ -308,11 +309,12 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
                   } else {
                     // Can't go above 640 chars
                     // Could extend this to a second text/voice & simple response.
+                    many_balances = true;
                     break;
                   }
                 }
               } else {
-                app.tell(`${input_account} does not have any assets in their account, try another account, goodbye.`);
+                app.tell(`${input_account} does not have any assets in their account, goodbye.`);
                 // TODO: Fallback to repeat account input instead of app.tell()
               }
             }
@@ -330,12 +332,21 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
               displayText: displayText
             });
 
+            if (hasScreen === true) {
+              if (many_balances === true) {
+                let basic_card = app.buildBasicCard('This account has too many balances to show. Please navigate to the linked block explorer.')
+                                    .setTitle(`Insufficient space to display ${input_account}'s balances!'`)
+                                    .addButton('Block explorer link', `http://bitshares-explorer.io/#/accounts/${input_account}`)
+                rich_response.addBasicCard(basic_card)
+              }
+            }
+
             // Note: Only for app.asp, not app.tell.
             // if (hasScreen === true) {
             //   rich_response.addSuggestions(['1', '2', '3', 'Quit']);
             // }
 
-            //app.ask(card); // Sending the details to the user, awaiting input!
+            //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
           }
@@ -511,34 +522,31 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
 
       let rich_response = app.buildRichResponse(); // Rich Response container
 
-      const textToSpeech1 = `<speak>` +
-        `Placeholder.` +
+      const textToSpeech = `<speak>` +
+        `You can request the following Asset information:` +
+        `Information about a single asset.` +
+        `Top Smartcoins.` +
+        `Top User Issued Assets.` +
+        `What do you want to know about Bitshares assets?` +
         `</speak>`;
 
-      const textToSpeech2 = `<speak>` +
-        `Placeholder.` +
-        `</speak>`;
-
-      const displayText1 = `Placeholder`;
-
-      const displayText2 = `Placeholder`;
+      const displayText1 = `You can request the following Asset information:` +
+              `Information about a single asset.` +
+              `Top Smartcoins.` +
+              `Top User Issued Assets.` +
+              `What do you want to know about Bitshares assets?`;
 
       card.addSimpleResponse({
-        speech: textToSpeech1,
-        displayText: displayText1
+        speech: textToSpeech,
+        displayText: displayText
       });
 
-      card.addSimpleResponse({
-        speech: textToSpeech2,
-        displayText: displayText2
-      });
+      if (hasScreen === true) {
+        rich_response.addSuggestions(['Top Smartcoins', 'Top UIAs', 'Help', 'Quit']);
+      }
 
-      //if (hasScreen === true) {
-      //  rich_response.addSuggestions(['1', '2', '3', 'Quit']);
-      //}
-
-      //app.ask(card); // Sending the details to the user, awaiting input!
-      app.tell(rich_response); // Sending the details to the user & closing app.
+      app.ask(rich_response); // Sending the details to the user, awaiting input!
+      //app.tell(rich_response); // Sending the details to the user & closing app.
     }
 
     function asset_One(app) {
@@ -569,40 +577,35 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
         if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
           if (body.success === true && body.valid_key === true) {
 
-            // variable = body.assetJSONVariable;
-
+            asset_data = body.asset_data;
             let rich_response = app.buildRichResponse(); // Rich Response container
 
-            const textToSpeech1 = `<speak>` +
-              `Placeholder.` +
+            const textToSpeech = `<speak>` +
+              `${input_asset_name} information:` +
+              `ID: ${asset_data['id']}` +
+              `Symbol: ${asset_data['symbol']}` +
+              `Description: ${asset_data['description']}` +
+              `Current supply: ${asset_data['dynamic_asset_data']['current_supply']}` +
+              `Confidential supply: ${asset_data['dynamic_asset_data']['confidential_supply']}` +
+              `Accumulated Fees: ${asset_data['dynamic_asset_data']['accumulated_fees']}` +
+              `Fee pool: ${asset_data['dynamic_asset_data']['fee_pool']}`
               `</speak>`;
 
-            const textToSpeech2 = `<speak>` +
-              `Placeholder.` +
-              `</speak>`;
-
-            const displayText1 = `Placeholder`;
-
-            const displayText2 = `Placeholder`;
-
-            rich_response.addSimpleResponse({
-              speech: textToSpeech1,
-              displayText: displayText1
-            });
+            const displayText = `${input_asset_name} information:` +
+            `ID: ${asset_data['id']}` +
+            `Symbol: ${asset_data['symbol']}` +
+            `Description: ${asset_data['description']}` +
+            `Current supply: ${asset_data['dynamic_asset_data']['current_supply']}` +
+            `Confidential supply: ${asset_data['dynamic_asset_data']['confidential_supply']}` +
+            `Accumulated Fees: ${asset_data['dynamic_asset_data']['accumulated_fees']}` +
+            `Fee pool: ${asset_data['dynamic_asset_data']['fee_pool']}`;
 
             rich_response.addSimpleResponse({
-              speech: textToSpeech2,
-              displayText: displayText2
+              speech: textToSpeech,
+              displayText: displayText
             });
 
-            // Note: Only for app.asp, not app.tell.
-            // if (hasScreen === true) {
-            //   rich_response.addSuggestions(['1', '2', '3', 'Quit']);
-            // }
-
-            //app.ask(card); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
-
           }
         } else {
           catch_error(app); // Something's wrong with the HUG server!
@@ -648,7 +651,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       //  rich_response.addSuggestions(['1', '2', '3', 'Quit']);
       //}
 
-      //app.ask(card); // Sending the details to the user, awaiting input!
+      //app.ask(rich_response); // Sending the details to the user, awaiting input!
       app.tell(rich_response); // Sending the details to the user & closing app.
     }
 
@@ -710,7 +713,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             //   rich_response.addSuggestions(['1', '2', '3', 'Quit']);
             // }
 
-            //app.ask(card); // Sending the details to the user, awaiting input!
+            //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
           }
@@ -778,7 +781,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             //   rich_response.addSuggestions(['1', '2', '3', 'Quit']);
             // }
 
-            //app.ask(card); // Sending the details to the user, awaiting input!
+            //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
           }
@@ -847,7 +850,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             //   rich_response.addSuggestions(['1', '2', '3', 'Quit']);
             // }
 
-            //app.ask(card); // Sending the details to the user, awaiting input!
+            //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
           }
@@ -895,7 +898,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       //  rich_response.addSuggestions(['1', '2', '3', 'Quit']);
       //}
 
-      //app.ask(card); // Sending the details to the user, awaiting input!
+      //app.ask(rich_response); // Sending the details to the user, awaiting input!
       app.tell(rich_response); // Sending the details to the user & closing app.
     }
 
@@ -957,7 +960,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             //   rich_response.addSuggestions(['1', '2', '3', 'Quit']);
             // }
 
-            //app.ask(card); // Sending the details to the user, awaiting input!
+            //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
           }
@@ -1025,7 +1028,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             //   rich_response.addSuggestions(['1', '2', '3', 'Quit']);
             // }
 
-            //app.ask(card); // Sending the details to the user, awaiting input!
+            //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
           }
@@ -1093,7 +1096,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             //   rich_response.addSuggestions(['1', '2', '3', 'Quit']);
             // }
 
-            //app.ask(card); // Sending the details to the user, awaiting input!
+            //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
           }
@@ -1141,7 +1144,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       //  rich_response.addSuggestions(['1', '2', '3', 'Quit']);
       //}
 
-      //app.ask(card); // Sending the details to the user, awaiting input!
+      //app.ask(rich_response); // Sending the details to the user, awaiting input!
       app.tell(rich_response); // Sending the details to the user & closing app.
     }
 
@@ -1204,7 +1207,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             //   rich_response.addSuggestions(['1', '2', '3', 'Quit']);
             // }
 
-            //app.ask(card); // Sending the details to the user, awaiting input!
+            //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
           }
@@ -1272,7 +1275,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             //   rich_response.addSuggestions(['1', '2', '3', 'Quit']);
             // }
 
-            //app.ask(card); // Sending the details to the user, awaiting input!
+            //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
           }
@@ -1340,7 +1343,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             //   rich_response.addSuggestions(['1', '2', '3', 'Quit']);
             // }
 
-            //app.ask(card); // Sending the details to the user, awaiting input!
+            //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
           }
@@ -1408,7 +1411,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             //   rich_response.addSuggestions(['1', '2', '3', 'Quit']);
             // }
 
-            //app.ask(card); // Sending the details to the user, awaiting input!
+            //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
           }
@@ -1476,7 +1479,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             //   rich_response.addSuggestions(['1', '2', '3', 'Quit']);
             // }
 
-            //app.ask(card); // Sending the details to the user, awaiting input!
+            //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
           }
@@ -1524,7 +1527,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       //  rich_response.addSuggestions(['1', '2', '3', 'Quit']);
       //}
 
-      //app.ask(card); // Sending the details to the user, awaiting input!
+      //app.ask(rich_response); // Sending the details to the user, awaiting input!
       app.tell(rich_response); // Sending the details to the user & closing app.
     }
 
@@ -1586,7 +1589,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             //   rich_response.addSuggestions(['1', '2', '3', 'Quit']);
             // }
 
-            //app.ask(card); // Sending the details to the user, awaiting input!
+            //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
           }
@@ -1654,7 +1657,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             //   rich_response.addSuggestions(['1', '2', '3', 'Quit']);
             // }
 
-            //app.ask(card); // Sending the details to the user, awaiting input!
+            //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
           }
@@ -1702,7 +1705,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       //  rich_response.addSuggestions(['1', '2', '3', 'Quit']);
       //}
 
-      //app.ask(card); // Sending the details to the user, awaiting input!
+      //app.ask(rich_response); // Sending the details to the user, awaiting input!
       app.tell(rich_response); // Sending the details to the user & closing app.
     }
 
@@ -1765,7 +1768,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             //   rich_response.addSuggestions(['1', '2', '3', 'Quit']);
             // }
 
-            //app.ask(card); // Sending the details to the user, awaiting input!
+            //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
           }
@@ -1833,7 +1836,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             //   rich_response.addSuggestions(['1', '2', '3', 'Quit']);
             // }
 
-            //app.ask(card); // Sending the details to the user, awaiting input!
+            //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
           }
