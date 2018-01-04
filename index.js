@@ -37,16 +37,16 @@ const BLOCK_ACTION = 'Block';
 //const BLOCK_FALLBACK = 'Block.Fallback';
 const BLOCK_LATEST_ACTION = 'Block.Latest';
 //const BLOCK_LATEST_FALLBACK = 'Block.Latest.Fallback';
-const BLOCK_ONE_ACTION = 'Block.One';
-//const BLOCK_ONE_FALLBACK = 'Block.One.Fallback';
+const GET_BLOCK_DETAILS_ACTION = 'Block.One';
+//const GET_BLOCK_DETAILS_FALLBACK = 'Block.One.Fallback';
 const BLOCKCHAIN_OVERVIEW_ACTION = 'Block.Overview';
 //const BLOCKCHAIN_OVERVIEW_FALLBACK = 'Block.Overview.Fallback';
 const COMMITTEE_ACTION = 'Committee';
 //const COMMITTEE_FALLBACK = 'Committee.Fallback';
 const COMMITTEE_ACTIVE_ACTION = 'Committee.Active';
 //const COMMITTEE_ACTIVE_FALLBACK = 'Committee.Active.Fallback';
-const COMMITTEE_ONE_ACTION = 'Committee.One';
-//const COMMITTEE_ONE_FALLBACK = 'Committee.One.Fallback';
+const GET_COMMITTEE_MEMBER_ACTION = 'Committee.One';
+//const GET_COMMITTEE_MEMBER_FALLBACK = 'Committee.One.Fallback';
 //const DEFAULT_FALLBACK = 'DefaultFallback';
 const FEES_ACTION = 'Fees';
 //const FEES_FALLBACK = 'Fees.Fallback';
@@ -215,7 +215,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       let rich_response = app.buildRichResponse(); // Rich Response container
 
       const textToSpeech1 = `<speak>` +
-        `Available Bitshares Account Functionality:` +
+        `Available Bitshares account information:` +
         `Account's basic overview.` +
         `Account's balances.` +
         `Account's open orders.` +
@@ -228,7 +228,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
         `What do you want to find out about an account?` +
         `</speak>`;
 
-      const displayText1 = `Available Account Functionality:` +
+      const displayText1 = `Available Bitshares account information:` +
       `Account's basic overview.` +
       `Account's balances.` +
       `Account's open orders.` +
@@ -336,7 +336,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
               if (many_balances === true) {
                 let basic_card = app.buildBasicCard('This account has too many balances to show. Please navigate to the linked block explorer.')
                                     .setTitle(`Insufficient space to display ${input_account}'s balances!'`)
-                                    .addButton('Block explorer link', `http://bitshares-explorer.io/#/accounts/${input_account}`)
+                                    .addButton('Block explorer link', `http://open-explorer.io/#/accounts/${input_account}`)
                 rich_response.addBasicCard(basic_card)
               }
             }
@@ -626,35 +626,24 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       let rich_response = app.buildRichResponse(); // Rich Response container
 
       const textToSpeech1 = `<speak>` +
+        `What kind of block information do you seek?`
         `Latest block details.` +
         `Specific block details.` +
-        `Block overview` +
-        `</speak>`;
-
-      const textToSpeech2 = `<speak>` +
-        `Placeholder.` +
+        `An overview of the blockchain.` +
         `</speak>`;
 
       const displayText1 = `Placeholder`;
-
-      const displayText2 = `Placeholder`;
 
       card.addSimpleResponse({
         speech: textToSpeech1,
         displayText: displayText1
       });
 
-      card.addSimpleResponse({
-        speech: textToSpeech2,
-        displayText: displayText2
-      });
+      if (hasScreen === true) {
+        rich_response.addSuggestions(['Latest block details', 'Blockchain overview', 'Help', 'Back', 'Quit']);
+      }
 
-      //if (hasScreen === true) {
-      //  rich_response.addSuggestions(['1', '2', '3', 'Quit']);
-      //}
-
-      //app.ask(rich_response); // Sending the details to the user, awaiting input!
-      app.tell(rich_response); // Sending the details to the user & closing app.
+      app.ask(rich_response); // Sending the details to the user, awaiting input!
     }
 
     function block_Latest(app) {
@@ -667,7 +656,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       parameter['placeholder'] = 'placeholder'; // We need this placeholder
       app.setContext('block_Latest', 1, parameter); // Need to set the data
       const request_options = {
-        url: `${hug_host}/get_asset`,
+        url: `${hug_host}/get_latest_block`,
         method: 'GET', // GET request, not POST.
         json: true,
         headers: {
@@ -675,49 +664,54 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
           'Content-Type': 'application/json'
         },
         qs: { // qs instead of form - because this is a GET request
-          asset_name: input_asset_name,// input
           api_key: '123abc'
         }
       };
 
       requestLib(request_options, (err, httpResponse, body) => {
         if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
-          if (body.success === true && body.valid_key === true) {
+          if (body.valid_block_number === true && body.valid_key === true) {
 
-            // variable = body.assetJSONVariable;
+            const previous = body.previous;
+            const witness  = body.witness;
+            const transaction_merkle_root = body.transaction_merkle_root;
+            const tx_count = body.transactions.length();
+            const block_id = body.id;
+            const block_date = body.block_date;
+            const block_number = body.block_number;
 
             let rich_response = app.buildRichResponse(); // Rich Response container
 
-            const textToSpeech1 = `<speak>` +
-              `Placeholder.` +
+            const textToSpeech = `<speak>` +
+              `Block ${block_number} is the latest Bitshares block.` +
+              `It was produced on ${block_date} by witness with ID ${witness}.` +
+              `There were ${tx_count} transactions in the block.` +
               `</speak>`;
 
-            const textToSpeech2 = `<speak>` +
-              `Placeholder.` +
-              `</speak>`;
-
-            const displayText1 = `Placeholder`;
-
-            const displayText2 = `Placeholder`;
+            const displayText = `Block ${block_number} (ID: ${block_id}) is the latest Bitshares block.\n\n` +
+                                  `The previous block was ${previous}, with a TX merkle root of ${transaction_merkle_root}.\n\n`
+                                  `It was produced on ${block_date} by witness with ID ${witness}.\n\n` +
+                                  `There were ${tx_count} transactions in the block.`;
 
             rich_response.addSimpleResponse({
-              speech: textToSpeech1,
-              displayText: displayText1
+              speech: textToSpeech,
+              displayText: displayText
             });
 
-            rich_response.addSimpleResponse({
-              speech: textToSpeech2,
-              displayText: displayText2
-            });
-
-            // Note: Only for app.asp, not app.tell.
-            // if (hasScreen === true) {
-            //   rich_response.addSuggestions(['1', '2', '3', 'Quit']);
-            // }
+            if (hasScreen === true) {
+              let basic_card = app.buildBasicCard('Interested in more block information?')
+                                  .setTitle(`More block info available!`)
+                                  .addButton('Block explorer link', `http://open-explorer.io/#/blocks/${block_number}`)
+              rich_response.addBasicCard(basic_card)
+            }
 
             //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
+          } else {
+            // WRONG Block number.
+            // TODO: SEND TO FALLBACK!
+            catch_error(app); // Something's wrong with the HUG server!
           }
         } else {
           catch_error(app); // Something's wrong with the HUG server!
@@ -725,17 +719,17 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       })
     }
 
-    function block_One(app) {
+    function get_block_details(app) {
       /*
-        block_One function
+        get_block_details function
       */
       app.data.fallbackCount = 0; // Required for tracking fallback attempts!
 
       const parameter = {}; // The dict which will hold our parameter data
       parameter['placeholder'] = 'placeholder'; // We need this placeholder
-      app.setContext('block_One', 1, parameter); // Need to set the data
+      app.setContext('get_block_details', 1, parameter); // Need to set the data
       const request_options = {
-        url: `${hug_host}/get_asset`,
+        url: `${hug_host}/get_block_details`,
         method: 'GET', // GET request, not POST.
         json: true,
         headers: {
@@ -743,45 +737,45 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
           'Content-Type': 'application/json'
         },
         qs: { // qs instead of form - because this is a GET request
-          asset_name: input_asset_name,// input
+          block_number: input_block_number,// input
           api_key: '123abc'
         }
       };
 
       requestLib(request_options, (err, httpResponse, body) => {
         if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
-          if (body.success === true && body.valid_key === true) {
+          if (body.valid_block_number === true && body.valid_key === true) {
 
-            // variable = body.assetJSONVariable;
+            const previous = body.previous;
+            const witness  = body.witness;
+            const transaction_merkle_root = body.transaction_merkle_root;
+            const tx_count = body.transactions.length();
+            const timestamp = body.timestamp;
 
             let rich_response = app.buildRichResponse(); // Rich Response container
 
-            const textToSpeech1 = `<speak>` +
-              `Placeholder.` +
+            const textToSpeech = `<speak>` +
+              `Here's info on block number ${block_number}:` +
+              `It was produced on ${block_date} by witness with ID ${witness}.` +
+              `There were ${tx_count} transactions in the block.` +
               `</speak>`;
 
-            const textToSpeech2 = `<speak>` +
-              `Placeholder.` +
-              `</speak>`;
-
-            const displayText1 = `Placeholder`;
-
-            const displayText2 = `Placeholder`;
+            const displayText = `Info regarding block number ${block_number}:\n\n` +
+                                  `The previous block was ${previous}, with a TX merkle root of ${transaction_merkle_root}.\n\n`
+                                  `It was produced on ${timestamp} by witness with ID ${witness}.\n\n` +
+                                  `There were ${tx_count} transactions in the block.`;
 
             rich_response.addSimpleResponse({
-              speech: textToSpeech1,
-              displayText: displayText1
+              speech: textToSpeech,
+              displayText: displayText
             });
 
-            rich_response.addSimpleResponse({
-              speech: textToSpeech2,
-              displayText: displayText2
-            });
-
-            // Note: Only for app.asp, not app.tell.
-            // if (hasScreen === true) {
-            //   rich_response.addSuggestions(['1', '2', '3', 'Quit']);
-            // }
+            if (hasScreen === true) {
+              let basic_card = app.buildBasicCard('Interested in more block information?')
+                                  .setTitle(`More block info available!`)
+                                  .addButton('Block explorer link', `http://open-explorer.io/#/blocks/${block_number}`)
+              rich_response.addBasicCard(basic_card)
+            }
 
             //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
@@ -854,6 +848,9 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
+          } else {
+            catch_error(app); // Something's wrong with the HUG server!
+            // TODO: REPLACE WITH FALLBACK!!
           }
         } else {
           catch_error(app); // Something's wrong with the HUG server!
@@ -961,7 +958,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
               if (more_than_640 === true) {
                 let basic_card = app.buildBasicCard('There are more Committee member to display! Please navigate to the linked block explorer.')
                                     .setTitle(`Insufficient space to display committee members!'`)
-                                    .addButton('Block explorer link', `http://bitshares-explorer.io/#/committee_members`)
+                                    .addButton('Block explorer link', `http://open-explorer.io/#/committee_members`)
                 rich_response.addBasicCard(basic_card)
               }
             }
@@ -969,6 +966,9 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
+          } else {
+            catch_error(app); // Something's wrong with the HUG server!
+            // TODO: REPLACE WITH FALLBACK!!
           }
         } else {
           catch_error(app); // Something's wrong with the HUG server!
@@ -976,17 +976,18 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       })
     }
 
-    function committee_One(app) {
+    function get_committee_member(app) {
       /*
-        committee_One function
+        get_committee_member function
       */
       app.data.fallbackCount = 0; // Required for tracking fallback attempts!
 
       const parameter = {}; // The dict which will hold our parameter data
       parameter['placeholder'] = 'placeholder'; // We need this placeholder
-      app.setContext('committee_One', 1, parameter); // Need to set the data
+      app.setContext('get_committee_member', 1, parameter); // Need to set the data
+
       const request_options = {
-        url: `${hug_host}/get_asset`,
+        url: `${hug_host}/get_committee_member`,
         method: 'GET', // GET request, not POST.
         json: true,
         headers: {
@@ -994,7 +995,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
           'Content-Type': 'application/json'
         },
         qs: { // qs instead of form - because this is a GET request
-          asset_name: input_asset_name,// input
+          committee_id: input_committee_id,// input
           api_key: '123abc'
         }
       };
@@ -1003,30 +1004,41 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
         if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
           if (body.success === true && body.valid_key === true) {
 
-            // variable = body.assetJSONVariable;
+            const get_committee_member_data = body.get_committee_member;
+            const committee_member_account = get_committee_member_data['committee_member_account'];
+            const total_votes = get_committee_member_data['total_votes'];
+            const vote_id = get_committee_member_data['vote_id'];
+            const committee_member_details = get_committee_member_data['committee_member_details'];
+            const name = committee_member_details['name'];
+            const registrar = committee_member_details['registrar'];
+            const name = committee_member_details['name'];
+            const committee_status = committee_member_details['status'];
+
+            var committee_status_string = ``;
+
+            if (committee_status === true) {
+              committee_status_string = `an`;
+            } else {
+              committee_status_string = `not an`;
+            }
 
             let rich_response = app.buildRichResponse(); // Rich Response container
 
-            const textToSpeech1 = `<speak>` +
-              `Placeholder.` +
+            const textToSpeech = `<speak>` +
+              `I found the committee member with ID ${committee_id}, here's some info:` +
+              `Their account ID is ${committee_member_account}, and their account name is ${name}.` +
+              `They were registered by ${registrar}.` +
+              `They currently have ${total_votes} votes, and are ${committee_status_string} active committee member.` +
               `</speak>`;
 
-            const textToSpeech2 = `<speak>` +
-              `Placeholder.` +
-              `</speak>`;
-
-            const displayText1 = `Placeholder`;
-
-            const displayText2 = `Placeholder`;
+            const displayText = `I found the committee member with ID ${committee_id}, here's some info:` +
+            `Their account ID is ${committee_member_account}, and their account name is ${name}.` +
+            `They were registered by ${registrar}.` +
+            `They currently have ${total_votes} votes, and are ${committee_status_string} active committee member.`;
 
             rich_response.addSimpleResponse({
-              speech: textToSpeech1,
-              displayText: displayText1
-            });
-
-            rich_response.addSimpleResponse({
-              speech: textToSpeech2,
-              displayText: displayText2
+              speech: textToSpeech,
+              displayText: displayText
             });
 
             // Note: Only for app.asp, not app.tell.
@@ -1037,6 +1049,9 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
+          } else {
+            catch_error(app); // Something's wrong with the HUG server!
+            // TODO: REPLACE WITH FALLBACK!!
           }
         } else {
           catch_error(app); // Something's wrong with the HUG server!
@@ -1053,8 +1068,9 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       const parameter = {}; // The dict which will hold our parameter data
       parameter['placeholder'] = 'placeholder'; // We need this placeholder
       app.setContext('fees', 1, parameter); // Need to set the data
+
       const request_options = {
-        url: `${hug_host}/get_asset`,
+        url: `${hug_host}/list_fees`,
         method: 'GET', // GET request, not POST.
         json: true,
         headers: {
@@ -1062,7 +1078,6 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
           'Content-Type': 'application/json'
         },
         qs: { // qs instead of form - because this is a GET request
-          asset_name: input_asset_name,// input
           api_key: '123abc'
         }
       };
@@ -1071,21 +1086,74 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
         if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
           if (body.success === true && body.valid_key === true) {
 
-            // variable = body.assetJSONVariable;
+            fees = body.network_fees;
 
             let rich_response = app.buildRichResponse(); // Rich Response container
 
             const textToSpeech1 = `<speak>` +
-              `Placeholder.` +
+              `The most important Bitshares network fees are:` +
+              `Asset transfer: ${}` +
+              `Limit order create: ${}` +
+              `Account creation: Between ${} and ${}` +
+              `Lifetime Membership Upgrade: ${}` +
+              `Asset creation: ${} to ${}` +
+              `Asset issuance: ${}` +
+              `Worker proposal creation ${}` +
               `</speak>`;
 
-            const textToSpeech2 = `<speak>` +
-              `Placeholder.` +
-              `</speak>`;
+            const displayText1 =  `Market fees:\n`
+                                  `Asset transfer: ${}\n` +
+                                  `Limit order create: ${}\n` +
+                                  `Limit order cancel: ${}\n` +
+                                  `Call order update: ${}\n\n` +
+                                  `Account fees:\n` +
+                                  `Create: ${} to ${}\n` +
+                                  `Update: ${}\n` +
+                                  `Whitelist: ${}\n` +
+                                  `LTM Upgrade: ${}` +
+                                  `Transfer: ${}\n\n` +
+                                  `Asset fees:\n` +
+                                  `Create: ${} to ${}\n` +
+                                  `Update: ${}\n` +
+                                  `Update bitasset: ${}\n` +
+                                  `Update feed producers: ${}\n` +
+                                  `Issue: ${}\n` +
+                                  `Reserve: ${}\n` +
+                                  `Fund fee pool: ${}\n` +
+                                  `Settle: ${}\n` +
+                                  `Global settle: ${}\n` +
+                                  `Publish feed: ${}\n\n` +
+                                  `Witness fees:\n` +
+                                  `Create: ${}\n` +
+                                  `Update: ${}\n\n`;
 
-            const displayText1 = `Placeholder`;
+            const displayText2 = `Proposal fees:\n` +
+                                  `Create: ${}\n` +
+                                  `Update: ${}\n` +
+                                  `Delete: ${}\n\n` +
 
-            const displayText2 = `Placeholder`;
+                                  `Withdraw permission fees:\n` +
+                                  `Create: ${}\n` +
+                                  `Update: ${}\n` +
+                                  `Claim: ${}\n\n` +
+
+                                  `Committee member fees:\n` +
+                                  `Create: ${}\n` +
+                                  `Update: ${}\n` +
+                                  `Update global parameters: ${}\n\n` +
+
+                                  `Vesting balance fees:\n` +
+                                  `Create: ${}\n` +
+                                  `Withdraw: ${}\n\n` +
+
+                                  `MISC fees:\n` +
+                                  `Worker create ${}\n` +
+                                  `Assert: ${}\n` +
+                                  `Override transfer: ${}\n` +
+                                  `Transfer to blind: ${}\n` +
+                                  `Price per output:	${}\n` +
+                                  `Transfer from blind: ${}\n` +
+                                  `Asset claim fees: ${}\n`;
 
             rich_response.addSimpleResponse({
               speech: textToSpeech1,
@@ -1093,18 +1161,24 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             });
 
             rich_response.addSimpleResponse({
-              speech: textToSpeech2,
+              // No speech here, because we don't want to read everything out!
               displayText: displayText2
             });
 
-            // Note: Only for app.asp, not app.tell.
-            // if (hasScreen === true) {
-            //   rich_response.addSuggestions(['1', '2', '3', 'Quit']);
-            // }
+            if (hasScreen === true) {
+              // To be honest, we provide just as much info regarding fees as the open-explorer, but at least it enables them to verify the fees are accurate!
+              let basic_card = app.buildBasicCard('Want more info on Bitshares network fees? Follow this link for more info! Remember that your elected committee members set these fees!')
+                                  .setTitle(`Additional info available regarding BTS fees!'`)
+                                  .addButton('Block explorer link', `http://open-explorer.io/#/fees`)
+              rich_response.addBasicCard(basic_card)
+            }
 
             //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
+          } else {
+            catch_error(app); // Something's wrong with the HUG server!
+            // TODO: REPLACE WITH FALLBACK!!
           }
         } else {
           catch_error(app); // Something's wrong with the HUG server!
@@ -1216,6 +1290,9 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
+          } else {
+            catch_error(app); // Something's wrong with the HUG server!
+            // TODO: REPLACE WITH FALLBACK!!
           }
         } else {
           catch_error(app); // Something's wrong with the HUG server!
@@ -1284,6 +1361,9 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
+          } else {
+            catch_error(app); // Something's wrong with the HUG server!
+            // TODO: REPLACE WITH FALLBACK!!
           }
         } else {
           catch_error(app); // Something's wrong with the HUG server!
@@ -1352,6 +1432,9 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
+          } else {
+            catch_error(app); // Something's wrong with the HUG server!
+            // TODO: REPLACE WITH FALLBACK!!
           }
         } else {
           catch_error(app); // Something's wrong with the HUG server!
@@ -1420,6 +1503,9 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
+          } else {
+            catch_error(app); // Something's wrong with the HUG server!
+            // TODO: REPLACE WITH FALLBACK!!
           }
         } else {
           catch_error(app); // Something's wrong with the HUG server!
@@ -1488,6 +1574,9 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
+          } else {
+            catch_error(app); // Something's wrong with the HUG server!
+            // TODO: REPLACE WITH FALLBACK!!
           }
         } else {
           catch_error(app); // Something's wrong with the HUG server!
@@ -1598,6 +1687,9 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
+          } else {
+            catch_error(app); // Something's wrong with the HUG server!
+            // TODO: REPLACE WITH FALLBACK!!
           }
         } else {
           catch_error(app); // Something's wrong with the HUG server!
@@ -1666,6 +1758,9 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
+          } else {
+            catch_error(app); // Something's wrong with the HUG server!
+            // TODO: REPLACE WITH FALLBACK!!
           }
         } else {
           catch_error(app); // Something's wrong with the HUG server!
@@ -1777,6 +1872,9 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
+          } else {
+            catch_error(app); // Something's wrong with the HUG server!
+            // TODO: REPLACE WITH FALLBACK!!
           }
         } else {
           catch_error(app); // Something's wrong with the HUG server!
@@ -1845,6 +1943,9 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
 
+          } else {
+            catch_error(app); // Something's wrong with the HUG server!
+            // TODO: REPLACE WITH FALLBACK!!
           }
         } else {
           catch_error(app); // Something's wrong with the HUG server!
@@ -2095,16 +2196,16 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
     //actionMap.set(BLOCK_FALLBACK, block_Fallback);
     actionMap.set(BLOCK_LATEST_ACTION, block_Latest);
     //actionMap.set(BLOCK_LATEST_FALLBACK, block_Latest_Fallback);
-    actionMap.set(BLOCK_ONE_ACTION, block_One);
-    //actionMap.set(BLOCK_ONE_FALLBACK, block_One_Fallback);
+    actionMap.set(GET_BLOCK_DETAILS_ACTION, get_block_details);
+    //actionMap.set(GET_BLOCK_DETAILS_FALLBACK, get_block_details_Fallback);
     actionMap.set(BLOCKCHAIN_OVERVIEW_ACTION, blockchain_Overview);
     //actionMap.set(BLOCKCHAIN_OVERVIEW_FALLBACK, blockchain_Overview_Fallback);
     actionMap.set(COMMITTEE_ACTION, committee);
     //actionMap.set(COMMITTEE_FALLBACK, committee_Fallback);
     actionMap.set(COMMITTEE_ACTIVE_ACTION, committee_Active);
     //actionMap.set(COMMITTEE_ACTIVE_FALLBACK, committee_Active_Fallback);
-    actionMap.set(COMMITTEE_ONE_ACTION, committee_One);
-    //actionMap.set(COMMITTEE_ONE_FALLBACK, committee_One_Fallback);
+    actionMap.set(GET_COMMITTEE_MEMBER_ACTION, get_committee_member);
+    //actionMap.set(GET_COMMITTEE_MEMBER_FALLBACK, get_committee_member_Fallback);
     actionMap.set(FEES_ACTION, fees);
     //actionMap.set(FEES_FALLBACK, fees_Fallback); // Probably not neccessary
     actionMap.set(MARKET_ACTION, market);
