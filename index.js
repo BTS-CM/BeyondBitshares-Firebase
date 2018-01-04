@@ -31,16 +31,16 @@ const ASSET_ACTION = 'Asset';
 //const ASSET_FALLBACK = 'Asset.Fallback';
 const ASSET_MANY_ACTION = 'Asset.Many';
 //const ASSET_MANY_FALLBACK = 'Asset.Many.Fallback';
-const ASSET_ONE_ACTION = 'Asset.One';
-//const ASSET_ONE_FALLBACK = 'Asset.One.Fallback';
+const GET_ASSET_ACTION = 'Asset.One';
+//const GET_ASSET_FALLBACK = 'Asset.One.Fallback';
 const BLOCK_ACTION = 'Block';
 //const BLOCK_FALLBACK = 'Block.Fallback';
 const BLOCK_LATEST_ACTION = 'Block.Latest';
 //const BLOCK_LATEST_FALLBACK = 'Block.Latest.Fallback';
 const BLOCK_ONE_ACTION = 'Block.One';
 //const BLOCK_ONE_FALLBACK = 'Block.One.Fallback';
-const BLOCK_OVERVIEW_ACTION = 'Block.Overview';
-//const BLOCK_OVERVIEW_FALLBACK = 'Block.Overview.Fallback';
+const BLOCKCHAIN_OVERVIEW_ACTION = 'Block.Overview';
+//const BLOCKCHAIN_OVERVIEW_FALLBACK = 'Block.Overview.Fallback';
 const COMMITTEE_ACTION = 'Committee';
 //const COMMITTEE_FALLBACK = 'Committee.Fallback';
 const COMMITTEE_ACTIVE_ACTION = 'Committee.Active';
@@ -292,7 +292,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             const account_balances = body.balances; // This var holds the account's balance array, retrieved from the HUG server.
 
             if (Array.isArray(genres)) {
-              const quantity_balances = account_balances.length; // Quantity of genres in the genre array
+              const quantity_balances = account_balances.length;
               if (quantity_balances > 0) { // More than one genre? Engage!
                 for (balance in account_balances) {
                   if (text.length < 640) {
@@ -394,7 +394,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
               const call_positions = body.call_positions; // This var holds the account's call positions
 
               if (Array.isArray(call_positions)) {
-                const quantity_call_positions = call_positions.length; // Quantity of genres in the genre array
+                const quantity_call_positions = call_positions.length;
                 if (quantity_call_positions > 0) {
                   for (call in call_positions) {
                     if (text.length < 640) {
@@ -542,22 +542,22 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       });
 
       if (hasScreen === true) {
-        rich_response.addSuggestions(['Top Smartcoins', 'Top UIAs', 'Help', 'Quit']);
+        rich_response.addSuggestions(['Top Smartcoins', 'Top UIAs', 'Back', 'Help', 'Quit']);
       }
 
       app.ask(rich_response); // Sending the details to the user, awaiting input!
       //app.tell(rich_response); // Sending the details to the user & closing app.
     }
 
-    function asset_One(app) {
+    function get_Asset(app) {
       /*
-        asset_One function
+        get_Asset function
       */
       app.data.fallbackCount = 0; // Required for tracking fallback attempts!
 
       const parameter = {}; // The dict which will hold our parameter data
       parameter['placeholder'] = 'placeholder'; // We need this placeholder
-      app.setContext('asset_One', 1, parameter); // Need to set the data
+      app.setContext('get_Asset', 1, parameter); // Need to set the data
 
       const request_options = {
         url: `${hug_host}/get_asset`,
@@ -626,7 +626,9 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       let rich_response = app.buildRichResponse(); // Rich Response container
 
       const textToSpeech1 = `<speak>` +
-        `Placeholder.` +
+        `Latest block details.` +
+        `Specific block details.` +
+        `Block overview` +
         `</speak>`;
 
       const textToSpeech2 = `<speak>` +
@@ -791,18 +793,18 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       })
     }
 
-    function block_Overview(app) {
+    function blockchain_Overview(app) {
       /*
-        block_Overview function
+        blockchain_Overview function
       */
       app.data.fallbackCount = 0; // Required for tracking fallback attempts!
 
       const parameter = {}; // The dict which will hold our parameter data
       parameter['placeholder'] = 'placeholder'; // We need this placeholder
-      app.setContext('block_Overview', 1, parameter); // Need to set the data
+      app.setContext('blockchain_Overview', 1, parameter); // Need to set the data
 
       const request_options = {
-        url: `${hug_host}/get_asset`,
+        url: `${hug_host}/chain_info`,
         method: 'GET', // GET request, not POST.
         json: true,
         headers: {
@@ -810,7 +812,6 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
           'Content-Type': 'application/json'
         },
         qs: { // qs instead of form - because this is a GET request
-          asset_name: input_asset_name,// input
           api_key: '123abc'
         }
       };
@@ -819,36 +820,36 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
         if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
           if (body.success === true && body.valid_key === true) {
 
-            // variable = body.assetJSONVariable;
+            chain_info = body.chain_info;
 
             let rich_response = app.buildRichResponse(); // Rich Response container
 
-            const textToSpeech1 = `<speak>` +
-              `Placeholder.` +
-              `</speak>`;
+            const textToSpeech = `<speak>` +
+                                    `Latest block number: ${chain_info['head_block_number']}.` +
+                                    `time: ${chain_info['time']}.` +
+                                    `current_witness: ${chain_info['current_witness']}.` +
+                                    `next_maintenance_time: ${chain_info['next_maintenance_time']}.` +
+                                    `last_budget_time: ${chain_info['last_budget_time']}.` +
+                                    `witness_budget: ${chain_info['witness_budget']}.` +
+                                    `accounts_registered_this_interval: ${chain_info['accounts_registered_this_interval']}.` +
+                                    `recently_missed_count: ${chain_info['recently_missed_count']}.` +
+                                    `last_irreversible_block_num: ${chain_info['last_irreversible_block_num']}.` +
+                                 `</speak>`;
 
-            const textToSpeech2 = `<speak>` +
-              `Placeholder.` +
-              `</speak>`;
-
-            const displayText1 = `Placeholder`;
-
-            const displayText2 = `Placeholder`;
+            const displayText = `Latest block number: ${chain_info['head_block_number']}.` +
+                                `time: ${chain_info['time']}.` +
+                                `current_witness: ${chain_info['current_witness']}.` +
+                                `next_maintenance_time: ${chain_info['next_maintenance_time']}.` +
+                                `last_budget_time: ${chain_info['last_budget_time']}.` +
+                                `witness_budget: ${chain_info['witness_budget']}.` +
+                                `accounts_registered_this_interval: ${chain_info['accounts_registered_this_interval']}.` +
+                                `recently_missed_count: ${chain_info['recently_missed_count']}.` +
+                                `last_irreversible_block_num: ${chain_info['last_irreversible_block_num']}.`;
 
             rich_response.addSimpleResponse({
-              speech: textToSpeech1,
-              displayText: displayText1
+              speech: textToSpeech,
+              displayText: displayText
             });
-
-            rich_response.addSimpleResponse({
-              speech: textToSpeech2,
-              displayText: displayText2
-            });
-
-            // Note: Only for app.asp, not app.tell.
-            // if (hasScreen === true) {
-            //   rich_response.addSuggestions(['1', '2', '3', 'Quit']);
-            // }
 
             //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
@@ -872,34 +873,24 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
 
       let rich_response = app.buildRichResponse(); // Rich Response container
 
-      const textToSpeech1 = `<speak>` +
-        `Placeholder.` +
+      const textToSpeech = `<speak>` +
+        `Do you want to look up the active committee members, or a single committee member?` +
+        `If the later, please accurately specify their account name` +
         `</speak>`;
 
-      const textToSpeech2 = `<speak>` +
-        `Placeholder.` +
-        `</speak>`;
-
-      const displayText1 = `Placeholder`;
-
-      const displayText2 = `Placeholder`;
+      const displayText = `Do you want to look up the active committee members, or a single committee member?` +
+      `If the later, please accurately specify their account name`;
 
       card.addSimpleResponse({
-        speech: textToSpeech1,
-        displayText: displayText1
+        speech: textToSpeech,
+        displayText: displayText
       });
 
-      card.addSimpleResponse({
-        speech: textToSpeech2,
-        displayText: displayText2
-      });
+      if (hasScreen === true) {
+        rich_response.addSuggestions(['Active committee members', 'Help', 'Back', 'Quit']);
+      }
 
-      //if (hasScreen === true) {
-      //  rich_response.addSuggestions(['1', '2', '3', 'Quit']);
-      //}
-
-      //app.ask(rich_response); // Sending the details to the user, awaiting input!
-      app.tell(rich_response); // Sending the details to the user & closing app.
+      app.ask(rich_response); // Sending the details to the user, awaiting input!
     }
 
     function committee_Active(app) {
@@ -911,8 +902,9 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       const parameter = {}; // The dict which will hold our parameter data
       parameter['placeholder'] = 'placeholder'; // We need this placeholder
       app.setContext('committee_Active', 1, parameter); // Need to set the data
+
       const request_options = {
-        url: `${hug_host}/get_asset`,
+        url: `${hug_host}/get_committee_members`,
         method: 'GET', // GET request, not POST.
         json: true,
         headers: {
@@ -920,7 +912,6 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
           'Content-Type': 'application/json'
         },
         qs: { // qs instead of form - because this is a GET request
-          asset_name: input_asset_name,// input
           api_key: '123abc'
         }
       };
@@ -929,36 +920,51 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
         if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
           if (body.success === true && body.valid_key === true) {
 
-            // variable = body.assetJSONVariable;
+            var text = ``;
+            var voice = ``;
+            var more_than_640 = false;
+            const committee_members = body.committee_members;
+
+            if (Array.isArray(committee_members)) {
+
+              for (member in committee_members) {
+                if (text.length < 640) {
+                  if (member.status === true) {
+                    text += `ID: ${member.id}, User ID: ${member.committee_member_account}, Vote ID: ${member.vote_id}, Total votes: ${member.total_votes}.\n`;
+                    voice += `Committee ID: ${member.id} is active with ${member.total_votes} votes.`;
+                  } else {
+                    continue;
+                  }
+                } else {
+                  // Can't go above 640 chars
+                  more_than_640 = true;
+                  break;
+                }
+              }
+
+            }
 
             let rich_response = app.buildRichResponse(); // Rich Response container
 
-            const textToSpeech1 = `<speak>` +
-              `Placeholder.` +
+            const textToSpeech = `<speak>` +
+              voice +
               `</speak>`;
 
-            const textToSpeech2 = `<speak>` +
-              `Placeholder.` +
-              `</speak>`;
-
-            const displayText1 = `Placeholder`;
-
-            const displayText2 = `Placeholder`;
+            const displayText = text;
 
             rich_response.addSimpleResponse({
-              speech: textToSpeech1,
-              displayText: displayText1
+              speech: textToSpeech,
+              displayText: displayText
             });
 
-            rich_response.addSimpleResponse({
-              speech: textToSpeech2,
-              displayText: displayText2
-            });
-
-            // Note: Only for app.asp, not app.tell.
-            // if (hasScreen === true) {
-            //   rich_response.addSuggestions(['1', '2', '3', 'Quit']);
-            // }
+            if (hasScreen === true) {
+              if (more_than_640 === true) {
+                let basic_card = app.buildBasicCard('There are more Committee member to display! Please navigate to the linked block explorer.')
+                                    .setTitle(`Insufficient space to display committee members!'`)
+                                    .addButton('Block explorer link', `http://bitshares-explorer.io/#/committee_members`)
+                rich_response.addBasicCard(basic_card)
+              }
+            }
 
             //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
@@ -2083,16 +2089,16 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
     //actionMap.set(ASSET_FALLBACK, asset_Fallback);
     actionMap.set(ASSET_MANY_ACTION, asset_Many);
     //actionMap.set(ASSET_MANY_FALLBACK, asset_Many_Fallback);
-    actionMap.set(ASSET_ONE_ACTION, asset_One);
-    //actionMap.set(ASSET_ONE_FALLBACK, asset_One_Fallback);
+    actionMap.set(GET_ASSET_ACTION, get_Asset);
+    //actionMap.set(GET_ASSET_FALLBACK, get_Asset_Fallback);
     actionMap.set(BLOCK_ACTION, block);
     //actionMap.set(BLOCK_FALLBACK, block_Fallback);
     actionMap.set(BLOCK_LATEST_ACTION, block_Latest);
     //actionMap.set(BLOCK_LATEST_FALLBACK, block_Latest_Fallback);
     actionMap.set(BLOCK_ONE_ACTION, block_One);
     //actionMap.set(BLOCK_ONE_FALLBACK, block_One_Fallback);
-    actionMap.set(BLOCK_OVERVIEW_ACTION, block_Overview);
-    //actionMap.set(BLOCK_OVERVIEW_FALLBACK, block_Overview_Fallback);
+    actionMap.set(BLOCKCHAIN_OVERVIEW_ACTION, blockchain_Overview);
+    //actionMap.set(BLOCKCHAIN_OVERVIEW_FALLBACK, blockchain_Overview_Fallback);
     actionMap.set(COMMITTEE_ACTION, committee);
     //actionMap.set(COMMITTEE_FALLBACK, committee_Fallback);
     actionMap.set(COMMITTEE_ACTIVE_ACTION, committee_Active);
