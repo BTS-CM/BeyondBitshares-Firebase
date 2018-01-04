@@ -1,0 +1,50 @@
+function account_History(app) {
+  /*
+    account_History function
+  */
+  app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+
+  const parameter = {}; // The dict which will hold our parameter data
+  parameter['placeholder'] = 'placeholder'; // We need this placeholder
+  app.setContext('account_History', 1, parameter); // Need to set the data
+  const request_options = {
+    url: `${hug_host}/account_history`,
+    method: 'GET', // GET request, not POST.
+    json: true,
+    headers: {
+      'User-Agent': 'Beyond Bitshares Bot',
+      'Content-Type': 'application/json'
+    },
+    qs: { // qs instead of form - because this is a GET request
+      account: input_account,// input
+      api_key: '123abc'
+    }
+  };
+
+  requestLib(request_options, (err, httpResponse, body) => {
+    if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
+      if (body.success === true && body.valid_key === true) {
+
+        // variable = body.assetJSONVariable;
+
+        let rich_response = app.buildRichResponse(); // Rich Response container
+
+        const textToSpeech = `<speak>` +
+          `Placeholder.` +
+          `</speak>`;
+
+        const displayText = `Placeholder`;
+
+        rich_response.addSimpleResponse({
+          speech: textToSpeech1,
+          displayText: displayText1
+        });
+
+        app.tell(rich_response); // Sending the details to the user & closing app.
+
+      }
+    } else {
+      catch_error(app); // Something's wrong with the HUG server!
+    }
+  })
+}
