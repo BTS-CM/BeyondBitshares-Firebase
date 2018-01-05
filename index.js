@@ -1092,68 +1092,63 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
 
             const textToSpeech1 = `<speak>` +
               `The most important Bitshares network fees are:` +
-              `Asset transfer: ${}` +
-              `Limit order create: ${}` +
-              `Account creation: Between ${} and ${}` +
-              `Lifetime Membership Upgrade: ${}` +
-              `Asset creation: ${} to ${}` +
-              `Asset issuance: ${}` +
-              `Worker proposal creation ${}` +
+              `Asset transfer: ${fees['transfer']['fee']}` +
+              `Limit order create: ${fees['limit_order_create']['fee']}` +
+              `Account creation: Between ${fees['account_create']['basic_fee']} and ${fees['account_create']['premium_fee']}` +
+              `Lifetime Membership Upgrade: ${fees['account_upgrade']['membership_lifetime_fee']}` +
+              `Asset creation: ${fees['asset_create']['long_symbol']} to ${fees['asset_create']['symbol3']}` +
+              `Asset issuance: ${fees['asset_issue']['fee']}` +
+              `Worker proposal creation ${fees['worker_create']['fee']}` +
               `</speak>`;
 
             const displayText1 =  `Market fees:\n`
-                                  `Asset transfer: ${}\n` +
-                                  `Limit order create: ${}\n` +
-                                  `Limit order cancel: ${}\n` +
-                                  `Call order update: ${}\n\n` +
+                                  `Asset transfer: ${fees['transfer']['fee']}\n` +
+                                  `Limit order create: ${fees['limit_order_create']['fee']}\n` +
+                                  `Limit order cancel: ${fees['limit_order_cancel']['fee']}\n` +
+                                  `Call order update: ${fees['call_order_update']['fee']}\n\n` +
                                   `Account fees:\n` +
-                                  `Create: ${} to ${}\n` +
-                                  `Update: ${}\n` +
-                                  `Whitelist: ${}\n` +
-                                  `LTM Upgrade: ${}` +
-                                  `Transfer: ${}\n\n` +
+                                  `Create: ${fees['account_create']['basic_fee']} to ${fees['account_create']['premium_fee']}\n` +
+                                  `Update: ${fees['account_update']['fee']}\n` +
+                                  `Whitelist: ${fees['account_whitelist']['fee']}\n` +
+                                  `LTM Upgrade: ${fees['account_upgrade']['membership_lifetime_fee']}` +
+                                  `Transfer: ${fees['account_transfer']['fee']}\n\n` +
                                   `Asset fees:\n` +
-                                  `Create: ${} to ${}\n` +
-                                  `Update: ${}\n` +
-                                  `Update bitasset: ${}\n` +
-                                  `Update feed producers: ${}\n` +
-                                  `Issue: ${}\n` +
-                                  `Reserve: ${}\n` +
-                                  `Fund fee pool: ${}\n` +
-                                  `Settle: ${}\n` +
-                                  `Global settle: ${}\n` +
-                                  `Publish feed: ${}\n\n` +
+                                  `Create: ${fees['asset_create']['long_symbol']} to ${fees['asset_create']['symbol3']}\n` +
+                                  `Update: ${fees['account_update']['fee']}\n` +
+                                  `Update bitasset: ${fees['asset_update_bitasset']['fee']}\n` +
+                                  `Update feed producers: ${fees['asset_update_feed_producers']['fee']}\n` +
+                                  `Issue: ${fees['asset_issue']['fee']}\n` +
+                                  `Reserve: ${fees['asset_reserve']['fee']}\n` +
+                                  `Fund fee pool: ${fees['asset_fund_fee_pool']['fee']}\n` +
+                                  `Settle: ${fees['asset_settle']['fee']}\n` +
+                                  `Global settle: ${fees['asset_global_settle']['fee']}\n` +
+                                  `Publish feed: ${fees['asset_publish_feed']['fee']}\n\n` +
                                   `Witness fees:\n` +
-                                  `Create: ${}\n` +
-                                  `Update: ${}\n\n`;
+                                  `Create: ${fees['witness_create']['fee']}\n` +
+                                  `Update: ${fees['witness_update']['fee']}`;
 
             const displayText2 = `Proposal fees:\n` +
-                                  `Create: ${}\n` +
-                                  `Update: ${}\n` +
-                                  `Delete: ${}\n\n` +
-
+                                  `Create: ${fees['proposal_create']['fee']}\n` +
+                                  `Update: ${fees['proposal_update']['fee']}\n` +
+                                  `Delete: ${fees['proposal_delete']['fee']}\n\n` +
                                   `Withdraw permission fees:\n` +
-                                  `Create: ${}\n` +
-                                  `Update: ${}\n` +
-                                  `Claim: ${}\n\n` +
-
+                                  `Create: ${fees['withdraw_permission_create']['fee']}\n` +
+                                  `Update: ${fees['withdraw_permission_update']['fee']}\n` +
+                                  `Claim: ${fees['withdraw_permission_claim']['fee']}\n\n` +
                                   `Committee member fees:\n` +
-                                  `Create: ${}\n` +
-                                  `Update: ${}\n` +
-                                  `Update global parameters: ${}\n\n` +
-
+                                  `Create: ${fees['committee_member_create']['fee']}\n` +
+                                  `Update: ${fees['committee_member_update']['fee']}\n` +
+                                  `Update global parameters: ${fees['committee_member_update_global_parameters']['fee']}\n\n` +
                                   `Vesting balance fees:\n` +
-                                  `Create: ${}\n` +
-                                  `Withdraw: ${}\n\n` +
-
+                                  `Create: ${fees['vesting_balance_create']['fee']}\n` +
+                                  `Withdraw: ${fees['vesting_balance_withdraw']['fee']}\n\n` +
                                   `MISC fees:\n` +
-                                  `Worker create ${}\n` +
-                                  `Assert: ${}\n` +
-                                  `Override transfer: ${}\n` +
-                                  `Transfer to blind: ${}\n` +
-                                  `Price per output:	${}\n` +
-                                  `Transfer from blind: ${}\n` +
-                                  `Asset claim fees: ${}\n`;
+                                  `Worker create ${fees['worker_create']['fee']}\n` +
+                                  `Assert: ${fees['assert']['fee']}\n` +
+                                  `Override transfer: ${fees['override_transfer']['fee']}\n` +
+                                  `Transfer to blind: ${fees['transfer_to_blind']['fee']}\n` +
+                                  `Transfer from blind: ${fees['transfer_from_blind']['fee']}\n` +
+                                  `Asset claim fees: ${fees['asset_claim_fees']['fee']}\n`;
 
             rich_response.addSimpleResponse({
               speech: textToSpeech1,
@@ -1220,12 +1215,12 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
         displayText: displayText2
       });
 
-      //if (hasScreen === true) {
-      //  rich_response.addSuggestions(['1', '2', '3', 'Quit']);
-      //}
+      if (hasScreen === true) {
+        rich_response.addSuggestions(['1', '2', '3', 'Quit']);
+      }
 
-      //app.ask(rich_response); // Sending the details to the user, awaiting input!
-      app.tell(rich_response); // Sending the details to the user & closing app.
+      app.ask(rich_response); // Sending the details to the user, awaiting input!
+      //app.tell(rich_response); // Sending the details to the user & closing app.
     }
 
     function market_24HRVolume(app) {
