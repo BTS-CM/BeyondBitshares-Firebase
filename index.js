@@ -1194,16 +1194,24 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       let rich_response = app.buildRichResponse(); // Rich Response container
 
       const textToSpeech1 = `<speak>` +
-        `Placeholder.` +
+        `You can request an individual trading pair's following market information:` +
+        `24 hour trading volume.` +
+        `Order overbook.` +
+        `Price ticker.` +
+        `Market trade history.` +
         `</speak>`;
 
       const textToSpeech2 = `<speak>` +
-        `Placeholder.` +
+        `What do you want to do? Remember to provide the trading pair in your query!` +
         `</speak>`;
 
-      const displayText1 = `Placeholder`;
+      const displayText1 = `You can request an individual trading pair's following market information:` +
+                            `24 hour trading volume.` +
+                            `Order overbook.` +
+                            `Price ticker.` +
+                            `Market trade history.`;
 
-      const displayText2 = `Placeholder`;
+      const displayText2 =  `What do you want to do? Remember to provide the trading pair in your query!`;
 
       card.addSimpleResponse({
         speech: textToSpeech1,
@@ -1216,7 +1224,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       });
 
       if (hasScreen === true) {
-        rich_response.addSuggestions(['1', '2', '3', 'Quit']);
+        rich_response.addSuggestions(['Back', 'Help', 'Quit']);
       }
 
       app.ask(rich_response); // Sending the details to the user, awaiting input!
@@ -1234,7 +1242,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       app.setContext('market_24HRVolume', 1, parameter); // Need to set the data
 
       const request_options = {
-        url: `${hug_host}/get_asset`,
+        url: `${hug_host}/market_24hr_vol`,
         method: 'GET', // GET request, not POST.
         json: true,
         headers: {
@@ -1242,40 +1250,41 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
           'Content-Type': 'application/json'
         },
         qs: { // qs instead of form - because this is a GET request
-          asset_name: input_asset_name,// input
+          trading_pair: input_trading_pair,// input
           api_key: '123abc'
         }
       };
 
       requestLib(request_options, (err, httpResponse, body) => {
         if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
-          if (body.success === true && body.valid_key === true) {
+          if (body.valid_market === true && body.valid_key === true) {
 
-            // variable = body.assetJSONVariable;
+            const market_volume_24hr = body.market_volume_24hr;
+            var base_asset = input_trading_pair.split("")[0];
+            var quote_asset = input_trading_pair.split("")[1];
+            var base_asset_amount = market_volume_24hr[base_asset]['amount'];
+            var quote_asset_amount = market_volume_24hr[quote_asset]['amount'];
+            var rate = base_asset_amount/quote_asset_amount;
 
             let rich_response = app.buildRichResponse(); // Rich Response container
 
             const textToSpeech1 = `<speak>` +
-              `Placeholder.` +
-              `</speak>`;
+                                    `${base_asset_amount} ${base_asset} were traded for ${quote_asset_amount} ${quote_asset} at an average rate of ${rate} ${trading_pair} within the last 24 hours.` +
+                                  `</speak>`;
 
-            const textToSpeech2 = `<speak>` +
-              `Placeholder.` +
-              `</speak>`;
-
-            const displayText1 = `Placeholder`;
-
-            const displayText2 = `Placeholder`;
+            const displayText1 = `${base_asset_amount} ${base_asset} were traded for ${quote_asset_amount} ${quote_asset} at an average rate of ${rate} ${trading_pair} within the last 24 hours.`;
 
             rich_response.addSimpleResponse({
               speech: textToSpeech1,
               displayText: displayText1
             });
 
-            rich_response.addSimpleResponse({
-              speech: textToSpeech2,
-              displayText: displayText2
-            });
+            if (hasScreen === true) {
+              let basic_card = app.buildBasicCard('Want more info regarding the above trading pair? Follow this link for more info!')
+                                  .setTitle(`Additional trading pair information!'`)
+                                  .addButton('Block explorer link', `http://open-explorer.io/#/markets/${quote_asset}/${base_asset}`)
+              rich_response.addBasicCard(basic_card)
+            }
 
             // Note: Only for app.asp, not app.tell.
             // if (hasScreen === true) {
@@ -1304,8 +1313,9 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       const parameter = {}; // The dict which will hold our parameter data
       parameter['placeholder'] = 'placeholder'; // We need this placeholder
       app.setContext('market_Overbook', 1, parameter); // Need to set the data
+
       const request_options = {
-        url: `${hug_host}/get_asset`,
+        url: `${hug_host}/market_orderbook`,
         method: 'GET', // GET request, not POST.
         json: true,
         headers: {
@@ -1313,30 +1323,60 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
           'Content-Type': 'application/json'
         },
         qs: { // qs instead of form - because this is a GET request
-          asset_name: input_asset_name,// input
+          market_pair: input_market_pair,// input
           api_key: '123abc'
         }
       };
 
       requestLib(request_options, (err, httpResponse, body) => {
         if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
-          if (body.success === true && body.valid_key === true) {
+          if (body.valid_market === true && body.valid_key === true) {
 
-            // variable = body.assetJSONVariable;
+            var base_asset = input_market_pair.split("")[0];
+            var quote_asset = input_market_pair.split("")[1];
+
+            var market_orderbook = body.market_orderbook;
+            var market_sell_orders = market_orderbook['asks'];
+            var market_buy_orders = market_orderbook['bids'];
+            var more_than_640 = false;
+            var orderbook_limit = 10;
 
             let rich_response = app.buildRichResponse(); // Rich Response container
 
-            const textToSpeech1 = `<speak>` +
-              `Placeholder.` +
-              `</speak>`;
+            var sell_text = `Sell orders: \n`;
+            var buy_text = `Buy orders: \n`;
 
-            const textToSpeech2 = `<speak>` +
-              `Placeholder.` +
-              `</speak>`;
+            for (i = 0; i < orderbook_limit; i++) {
+              if (sell_text.length < 640 || buy_text.length < 640 ) {
+                current_sell = market_sell_orders[i.toString()]
+                current_sell_quote = current_sell['quote'];
+                current_sell_base = current_sell['base'];
+                sell_text += `Wants: ${current_sell_quote['amount']} ${current_sell_quote['symbol']} for ${current_base_quote['amount']} ${current_sell_quote['symbol']} (${current_sell['price']} ${current_sell_quote['symbol']}/${current_buy_quote['symbol']})`;
+                sell_voice_inner += `${current_sell_quote['amount']} ${current_sell_quote['symbol']} for ${current_base_quote['amount']} ${current_sell_quote['symbol']} (rate of ${current_sell['price']} ${current_sell_quote['symbol']}/${current_buy_quote['symbol']})`;
+                /*
+                  Really aught to squish this down, but that's a future problem.
+                */
+                current_buy = market_buy_orders[i.toString()]
+                current_buy_quote = current_buy['quote'];
+                current_buy_base = current_buy['base'];
+                buy_text += `Wants: ${current_buy_quote['amount']} ${current_buy_quote['symbol']} for ${current_base_quote['amount']} ${current_buy_quote['symbol']} (${current_buy['price']} ${current_buy_quote['symbol']}/${current_sell_quote['symbol']})`;
+                buy_voice_inner += `${current_buy_quote['amount']} ${current_buy_quote['symbol']} for ${current_base_quote['amount']} ${current_buy_quote['symbol']} (a rate of ${current_buy['price']} ${current_buy_quote['symbol']}/${current_sell_quote['symbol']})`;
+              } else {
+                // Can't go above 640 chars
+                more_than_640 = true;
+                break;
+              }
+            }
 
-            const displayText1 = `Placeholder`;
+            const sell_voice = `<speak>` +
+                                `Sell orders:` +
+                                `${sell_voice_inner}`+ +
+                                `</speak>`;
 
-            const displayText2 = `Placeholder`;
+            const buy_voice = `<speak>` +
+                                `Sell orders:` +
+                                `${buy_voice_inner}`+
+                                `</speak>`;
 
             rich_response.addSimpleResponse({
               speech: textToSpeech1,
@@ -1347,6 +1387,13 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
               speech: textToSpeech2,
               displayText: displayText2
             });
+
+            if (hasScreen === true) {
+              let basic_card = app.buildBasicCard('Desire additional open order information? Follow this link for more info!')
+                                  .setTitle(`Additional market open order information available!'`)
+                                  .addButton('Block explorer link', `http://open-explorer.io/#/markets/${quote_asset}/${base_asset}`)
+              rich_response.addBasicCard(basic_card)
+            }
 
             // Note: Only for app.asp, not app.tell.
             // if (hasScreen === true) {
@@ -1376,7 +1423,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       parameter['placeholder'] = 'placeholder'; // We need this placeholder
       app.setContext('market_Ticker', 1, parameter); // Need to set the data
       const request_options = {
-        url: `${hug_host}/get_asset`,
+        url: `${hug_host}/market_ticker`,
         method: 'GET', // GET request, not POST.
         json: true,
         headers: {
@@ -1384,16 +1431,45 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
           'Content-Type': 'application/json'
         },
         qs: { // qs instead of form - because this is a GET request
-          asset_name: input_asset_name,// input
+          market_pair: input_market_pair,// input
           api_key: '123abc'
         }
       };
 
       requestLib(request_options, (err, httpResponse, body) => {
         if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
-          if (body.success === true && body.valid_key === true) {
+          if (body.valid_market === true && body.valid_key === true) {
 
-            // variable = body.assetJSONVariable;
+            const market_ticker = body.market_ticker;
+            const core_exchange_rate = market_ticker['core_exchange_rate'];
+            const cer_base_amount = core_exchange_rate['base']['amount'];
+            const cer_quote_amount = core_exchange_rate['quote']['amount'];
+            const cer_price = core_exchange_rate['price'];
+
+            const quoteSettlement_price = market_ticker['quoteSettlement_price'];
+            const qsp_base_amount = quoteSettlement_price['base']['amount'];
+            const qsp_quote_amount = quoteSettlement_price['quote']['amount'];
+            const qsp_price = quoteSettlement_price['price'];
+
+            const baseVolume_amount = market_ticker['baseVolume']['amount'];
+            const quoteVolume_amount = market_ticker['quoteVolume']['amount'];
+
+            const lowestAsk = market_ticker['lowestAsk'];
+            const la_base_amount = lowestAsk['base']['amount'];
+            const la_quote_amount = lowestAsk['quote']['amount'];
+            const la_price = lowestAsk['price'];
+
+            const highestBid = market_ticker['highestBid'];
+            const hb_base_amount = highestBid['base']['amount'];
+            const hb_quote_amount = highestBid['quote']['amount'];
+            const hb_price = highestBid['price'];
+
+            const percentChange = market_ticker['percentChange'];
+
+            const latest = market_ticker['latest'];
+            const l_base_amount = latest['base']['amount'];
+            const l_quote_amount = latest['quote']['amount'];
+            const l_price = latest['price'];
 
             let rich_response = app.buildRichResponse(); // Rich Response container
 
@@ -1418,6 +1494,15 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
               speech: textToSpeech2,
               displayText: displayText2
             });
+
+            if (hasScreen === true) {
+              var base_asset = input_market_pair.split("")[0];
+              var quote_asset = input_market_pair.split("")[1];
+              let basic_card = app.buildBasicCard('Desire additional market ticker information? Follow this link for more info!')
+                                  .setTitle(`Additional market ticker information available!'`)
+                                  .addButton('Block explorer link', `http://open-explorer.io/#/markets/${quote_asset}/${base_asset}`)
+              rich_response.addBasicCard(basic_card)
+            }
 
             // Note: Only for app.asp, not app.tell.
             // if (hasScreen === true) {
