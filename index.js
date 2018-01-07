@@ -5,6 +5,7 @@ const App = require('actions-on-google').DialogflowApp; // Mandatory
 const functions = require('firebase-functions'); // Mandatory when using firebase
 const http = require('https'); // Required for request's https use? Or dead code?...
 const requestLib = require('request'); // Used for querying the HUG.REST API
+const moment = require('moment'); // For handling time.
 
 const hug_host = 'https://btsapi.grcnode.co.uk'; // Change this to your own HUG REST API server (if you want)
 
@@ -1473,26 +1474,46 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
 
             let rich_response = app.buildRichResponse(); // Rich Response container
 
-            const textToSpeech1 = `<speak>` +
-              `Placeholder.` +
-              `</speak>`;
+            const textToSpeech = `<speak>` +
+                                    `Core exchange rate price: ${cer_price}` +
+                                    `Quote settlement price: ${qsp_price}` +
+                                    `Base volume amount: ${baseVolume_amount}` +
+                                    `Quote volume amount: ${quoteVolume_amount}` +
+                                    `Lowest ask price: ${la_price}` +
+                                    `Highest bid price: ${hb_price}` +
+                                    `Recent percent change: ${percentChange}` +
+                                    `Latest base amount: ${l_base_amount}` +
+                                    `Latest quote amount: ${l_quote_amount}` +
+                                    `Latest price: ${l_price}` +
+                                  `</speak>`;
 
-            const textToSpeech2 = `<speak>` +
-              `Placeholder.` +
-              `</speak>`;
-
-            const displayText1 = `Placeholder`;
-
-            const displayText2 = `Placeholder`;
+            const displayText = `Core exchange rate:\n` +
+                                  `Base amount: ${cer_base_amount}\n` +
+                                  `Quote amount: ${cer_quote_amount}\n` +
+                                  `Price: ${cer_price}\n\n` +
+                                  `Quote settlement:\n` +
+                                  `Base amount: ${qsp_base_amount}\n` +
+                                  `Quote amount: ${qsp_quote_amount}\n` +
+                                  `Price: ${qsp_price}\n\n` +
+                                  `Volume:\n` +
+                                  `Base amount: ${baseVolume_amount}\n` +
+                                  `Quote amount: ${quoteVolume_amount}\n\n` +
+                                  `Lowest Ask:\n` +
+                                  `Base amount: ${la_base_amount}\n` +
+                                  `Quote amount: ${la_quote_amount}\n` +
+                                  `Lowest price: ${la_price}\n\n` +
+                                  `Highest Bid:\n` +
+                                  `Base amount: ${hb_base_amount}\n` +
+                                  `Quote amount: ${hb_quote_amount}\n\n` +
+                                  `Latest:\n` +
+                                  `Base amount: ${l_base_amount}\n` +
+                                  `Quote amount: ${l_quote_amount}\n` +
+                                  `Price: ${l_price}\n` +
+                                  `Percentage change: ${percentChange}`;
 
             rich_response.addSimpleResponse({
-              speech: textToSpeech1,
-              displayText: displayText1
-            });
-
-            rich_response.addSimpleResponse({
-              speech: textToSpeech2,
-              displayText: displayText2
+              speech: textToSpeech,
+              displayText: displayText
             });
 
             if (hasScreen === true) {
@@ -1532,7 +1553,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       parameter['placeholder'] = 'placeholder'; // We need this placeholder
       app.setContext('market_TradeHistory', 1, parameter); // Need to set the data
       const request_options = {
-        url: `${hug_host}/get_asset`,
+        url: `${hug_host}/market_trade_history`,
         method: 'GET', // GET request, not POST.
         json: true,
         headers: {
@@ -1540,30 +1561,55 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
           'Content-Type': 'application/json'
         },
         qs: { // qs instead of form - because this is a GET request
-          asset_name: input_asset_name,// input
+          market_pair: input_market_pair,// input
           api_key: '123abc'
         }
       };
 
       requestLib(request_options, (err, httpResponse, body) => {
         if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
-          if (body.success === true && body.valid_key === true) {
+          if (body.valid_market === true && body.valid_key === true) {
 
-            // variable = body.assetJSONVariable;
+            const market_trade_history = body.market_trade_history;
+            const mth_limit = 10;
+            var trade_text = ``;
+            var avg_rate = 0;
+            var total_bought = 0;
+            var total_sold = 0;
+
+            for (i = 0; i < mth_limit; i++) {
+              if (trade_text.length < 640) {
+                const current_trade = mth_limit[i.toString()]
+                const bought = current_trade['bought'];
+                const sold = current_trade['sold'];
+                const rate = current_trade['rate'];
+
+                total_bought += bought;
+                total_sold += sold;
+                avg_rate += rate;
+
+                trade_text += `Bought ${bought} by selling ${sold} at a rate of ${rate}.\n`;
+              } else {
+                // Can't go above 640 chars
+                more_than_640 = true;
+                break;
+              }
+            }
+
+            avg_rate = avg_rate/mth_limit;
+            var base_asset = input_market_pair.split("")[0];
+            var quote_asset = input_market_pair.split("")[1];
 
             let rich_response = app.buildRichResponse(); // Rich Response container
 
             const textToSpeech1 = `<speak>` +
-              `Placeholder.` +
+              `The last 10 ${input_market_pair} market trades saw ${total_bought} ${base_asset} purchased and ${total_sold} ${quote_asset} sold with an avg rate of ${avg_rate}.` +
               `</speak>`;
 
-            const textToSpeech2 = `<speak>` +
-              `Placeholder.` +
-              `</speak>`;
+            const displayText1 = `The last 10 ${input_market_pair} market trades saw ${total_bought} ${base_asset} purchased and ${total_sold} ${quote_asset} sold with an avg rate of ${avg_rate}.`;
 
-            const displayText1 = `Placeholder`;
-
-            const displayText2 = `Placeholder`;
+            const displayText2 = `Last 10 market trades:\n` +
+            `${trade_text}`;
 
             rich_response.addSimpleResponse({
               speech: textToSpeech1,
@@ -1571,80 +1617,15 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             });
 
             rich_response.addSimpleResponse({
-              speech: textToSpeech2,
               displayText: displayText2
             });
 
-            // Note: Only for app.asp, not app.tell.
-            // if (hasScreen === true) {
-            //   rich_response.addSuggestions(['1', '2', '3', 'Quit']);
-            // }
-
-            //app.ask(rich_response); // Sending the details to the user, awaiting input!
-            app.tell(rich_response); // Sending the details to the user & closing app.
-
-          } else {
-            catch_error(app); // Something's wrong with the HUG server!
-            // TODO: REPLACE WITH FALLBACK!!
-          }
-        } else {
-          catch_error(app); // Something's wrong with the HUG server!
-        }
-      })
-    }
-
-    function network(app) {
-      /*
-        network function
-      */
-      app.data.fallbackCount = 0; // Required for tracking fallback attempts!
-
-      const parameter = {}; // The dict which will hold our parameter data
-      parameter['placeholder'] = 'placeholder'; // We need this placeholder
-      app.setContext('network', 1, parameter); // Need to set the data
-      const request_options = {
-        url: `${hug_host}/get_asset`,
-        method: 'GET', // GET request, not POST.
-        json: true,
-        headers: {
-          'User-Agent': 'Beyond Bitshares Bot',
-          'Content-Type': 'application/json'
-        },
-        qs: { // qs instead of form - because this is a GET request
-          asset_name: input_asset_name,// input
-          api_key: '123abc'
-        }
-      };
-
-      requestLib(request_options, (err, httpResponse, body) => {
-        if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
-          if (body.success === true && body.valid_key === true) {
-
-            // variable = body.assetJSONVariable;
-
-            let rich_response = app.buildRichResponse(); // Rich Response container
-
-            const textToSpeech1 = `<speak>` +
-              `Placeholder.` +
-              `</speak>`;
-
-            const textToSpeech2 = `<speak>` +
-              `Placeholder.` +
-              `</speak>`;
-
-            const displayText1 = `Placeholder`;
-
-            const displayText2 = `Placeholder`;
-
-            rich_response.addSimpleResponse({
-              speech: textToSpeech1,
-              displayText: displayText1
-            });
-
-            rich_response.addSimpleResponse({
-              speech: textToSpeech2,
-              displayText: displayText2
-            });
+            if (hasScreen === true) {
+              let basic_card = app.buildBasicCard('Desire additional market trade history information? Follow this link for more info!')
+                                  .setTitle(`Additional market trade info available!'`)
+                                  .addButton('Block explorer link', `http://open-explorer.io/#/markets/${quote_asset}/${base_asset}`)
+              rich_response.addBasicCard(basic_card)
+            }
 
             // Note: Only for app.asp, not app.tell.
             // if (hasScreen === true) {
@@ -1677,25 +1658,14 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       let rich_response = app.buildRichResponse(); // Rich Response container
 
       const textToSpeech1 = `<speak>` +
-        `Placeholder.` +
+        `Do you want information regarding an individual witness, or a summary of all active witnesses?` +
         `</speak>`;
 
-      const textToSpeech2 = `<speak>` +
-        `Placeholder.` +
-        `</speak>`;
-
-      const displayText1 = `Placeholder`;
-
-      const displayText2 = `Placeholder`;
+      const displayText1 = `Do you want information regarding an individual witness, or a summary of all active witnesses?`;
 
       card.addSimpleResponse({
         speech: textToSpeech1,
         displayText: displayText1
-      });
-
-      card.addSimpleResponse({
-        speech: textToSpeech2,
-        displayText: displayText2
       });
 
       //if (hasScreen === true) {
@@ -1716,7 +1686,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       parameter['placeholder'] = 'placeholder'; // We need this placeholder
       app.setContext('witness_Active', 1, parameter); // Need to set the data
       const request_options = {
-        url: `${hug_host}/get_asset`,
+        url: `${hug_host}/list_of_witnesses`,
         method: 'GET', // GET request, not POST.
         json: true,
         headers: {
@@ -1724,7 +1694,6 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
           'Content-Type': 'application/json'
         },
         qs: { // qs instead of form - because this is a GET request
-          asset_name: input_asset_name,// input
           api_key: '123abc'
         }
       };
@@ -1733,31 +1702,80 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
         if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
           if (body.success === true && body.valid_key === true) {
 
-            // variable = body.assetJSONVariable;
+            const witnesses = body.witnesses;
+            const num_active_witnesses = body.witness_count;
+            var inner_text1 = ``;
+            var inner_voice1 = ``;
+
+            for (witness in witnesses) {
+              if witness['witness_status'] === true {
+                // Active witness!
+                const account_data = witness['witness_account_Data'];
+                const role_data = witness['witness_role_data'];
+
+                const witness_name = account_data['name'];
+                const witness_id = role_data['id'];
+                const witness_account = role_data['witness_account'];
+                const vote_id = role_data['vote_id'];
+                //const url = role_data['url']; //TMI when viewing many witnesses!
+                const total_votes = role_data['total_votes'];
+                const total_blocks_missed = role_data['total_missed'];
+                const last_confirmed_block_num = role_data['last_confirmed_block_num'];
+
+                if (inner_text1.length() < 640) {
+                  inner_text1 += `${witness_name} (ID: ${witness_id}): ${total_votes} votes.`;
+                  inner_voice1 += `${witness_name} with ${total_votes} votes.`;
+                } else {
+
+                  if (inner_text2.length() < 640) {
+                    inner_text2 += `${witness_name} (ID: ${witness_id}): ${total_votes} votes.`;
+                    inner_voice2 += `${witness_name} with ${total_votes} votes.`;
+                  } else {
+                    // Don't need it..
+                    continue;
+                  }
+                }
+              } else {
+                continue;
+              }
+            }
 
             let rich_response = app.buildRichResponse(); // Rich Response container
 
             const textToSpeech1 = `<speak>` +
-              `Placeholder.` +
+              `The following is a list of the ${num_active_witnesses} active witnesses:` +
+              inner_voice1 +
               `</speak>`;
 
-            const textToSpeech2 = `<speak>` +
-              `Placeholder.` +
-              `</speak>`;
+            const displayText1 = `The following is a list of the ${num_active_witnesses} active witnesses:` +
+                                 inner_text1;
 
-            const displayText1 = `Placeholder`;
+             rich_response.addSimpleResponse({
+               speech: textToSpeech1,
+               displayText: displayText1
+             });
 
-            const displayText2 = `Placeholder`;
+            var textToSpeech2 = ``;
+            var displayText2 = ``;
+            if (inner_text2.length() > 1) {
+              textToSpeech2 = `<speak>` +
+                inner_voice2 +
+                `</speak>`;
 
-            rich_response.addSimpleResponse({
-              speech: textToSpeech1,
-              displayText: displayText1
-            });
+              displayText2 = inner_text2;
 
-            rich_response.addSimpleResponse({
-              speech: textToSpeech2,
-              displayText: displayText2
-            });
+              rich_response.addSimpleResponse({
+                speech: textToSpeech2,
+                displayText: displayText2
+              });
+            }
+
+            if (hasScreen === true) {
+              let basic_card = app.buildBasicCard('Desire additional witness information? Follow this link for more info!')
+                                  .setTitle(`Additional witness information available!'`)
+                                  .addButton('Block explorer link', `http://open-explorer.io/#/witness`)
+              rich_response.addBasicCard(basic_card)
+            }
 
             // Note: Only for app.asp, not app.tell.
             // if (hasScreen === true) {
@@ -1786,8 +1804,9 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       const parameter = {}; // The dict which will hold our parameter data
       parameter['placeholder'] = 'placeholder'; // We need this placeholder
       app.setContext('witness_One', 1, parameter); // Need to set the data
+
       const request_options = {
-        url: `${hug_host}/get_asset`,
+        url: `${hug_host}/find_witness`,
         method: 'GET', // GET request, not POST.
         json: true,
         headers: {
@@ -1795,40 +1814,68 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
           'Content-Type': 'application/json'
         },
         qs: { // qs instead of form - because this is a GET request
-          asset_name: input_asset_name,// input
+          witness_name: witness_name,// input
           api_key: '123abc'
         }
       };
 
       requestLib(request_options, (err, httpResponse, body) => {
         if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
-          if (body.success === true && body.valid_key === true) {
+          if (body.valid_witness === true && body.valid_key === true) {
 
-            // variable = body.assetJSONVariable;
+            const witness_role_data = body.witness_role_data;
+            const witness_account_data = body.witness_account_data;
+
+            const witness_name = witness_account_data['name'];
+            const witness_id = witness_role_data['id'];
+            const witness_account = witness_role_data['witness_account'];
+            const vote_id = witness_role_data['vote_id'];
+            const url = witness_role_data['url']; //TMI when viewing many witnesses!
+            const total_votes = witness_role_data['total_votes'];
+            const total_blocks_missed = witness_role_data['total_missed'];
+            const last_confirmed_block_num = witness_role_data['last_confirmed_block_num'];
+            const witness_status = body.active_witness;
+            var witness_status_msg = ``;
+
+            if (witness_status === true) {
+              witness_status_msg = `Active`;
+            } else {
+              witness_status_msg = `Inactive`;
+            }
 
             let rich_response = app.buildRichResponse(); // Rich Response container
 
             const textToSpeech1 = `<speak>` +
-              `Placeholder.` +
-              `</speak>`;
+                                    `We found the following ${witness_status_msg} witness named ${witness_name}:` +
+                                    `Witness ID: ${witness_id}.` +
+                                    `Vote ID: ${vote_id}.` +
+                                    `Total votes: ${total_votes}.` +
+                                    `Total blocks missed ${total_blocks_missed}.` +
+                                    `Last confirmed block: ${last_confirmed_block_num}.` +
+                                  `</speak>`;
 
-            const textToSpeech2 = `<speak>` +
-              `Placeholder.` +
-              `</speak>`;
+            var displayText1 =  `We found the following ${witness_status_msg} witness named ${witness_name}:\n` +
+                                  `Witness ID: ${witness_id}.\n` +
+                                  `Vote ID: ${vote_id}.\n` +
+                                  `Total votes: ${total_votes}.\n` +
+                                  `Total blocks missed ${total_blocks_missed}.\n` +
+                                  `Last confirmed block: ${last_confirmed_block_num}.`;
 
-            const displayText1 = `Placeholder`;
-
-            const displayText2 = `Placeholder`;
+            if (url.length() > 1) {
+              displayText1 += `URL: ${url}`;
+            }
 
             rich_response.addSimpleResponse({
               speech: textToSpeech1,
               displayText: displayText1
             });
 
-            rich_response.addSimpleResponse({
-              speech: textToSpeech2,
-              displayText: displayText2
-            });
+            if (hasScreen === true) {
+              let basic_card = app.buildBasicCard(`Desire additional account information about ${witness_name}? Follow this link for more info!`)
+                                  .setTitle(`Additional account information available!'`)
+                                  .addButton('Block explorer link', `http://open-explorer.io/#/accounts/${witness_name}`)
+              rich_response.addBasicCard(basic_card)
+            }
 
             // Note: Only for app.asp, not app.tell.
             // if (hasScreen === true) {
@@ -1861,33 +1908,22 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       let rich_response = app.buildRichResponse(); // Rich Response container
 
       const textToSpeech1 = `<speak>` +
-        `Placeholder.` +
+        `Do you want information regarding an individual worker proposal, or a summary of all active worker proposals?` +
         `</speak>`;
 
-      const textToSpeech2 = `<speak>` +
-        `Placeholder.` +
-        `</speak>`;
-
-      const displayText1 = `Placeholder`;
-
-      const displayText2 = `Placeholder`;
+      const displayText1 = `Do you want information regarding an individual worker proposal, or a summary of all active worker proposals?`;
 
       card.addSimpleResponse({
         speech: textToSpeech1,
         displayText: displayText1
       });
 
-      card.addSimpleResponse({
-        speech: textToSpeech2,
-        displayText: displayText2
-      });
+      if (hasScreen === true) {
+        rich_response.addSuggestions(['Active worker proposals', 'Back', 'Help', 'Quit']);
+      }
 
-      //if (hasScreen === true) {
-      //  rich_response.addSuggestions(['1', '2', '3', 'Quit']);
-      //}
-
-      //app.ask(rich_response); // Sending the details to the user, awaiting input!
-      app.tell(rich_response); // Sending the details to the user & closing app.
+      app.ask(rich_response); // Sending the details to the user, awaiting input!
+      //app.tell(rich_response); // Sending the details to the user & closing app.
     }
 
     function worker_Many(app) {
@@ -1901,7 +1937,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       app.setContext('worker_Many', 1, parameter); // Need to set the data
 
       const request_options = {
-        url: `${hug_host}/get_asset`,
+        url: `${hug_host}/get_worker_proposals`,
         method: 'GET', // GET request, not POST.
         json: true,
         headers: {
@@ -1909,7 +1945,6 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
           'Content-Type': 'application/json'
         },
         qs: { // qs instead of form - because this is a GET request
-          asset_name: input_asset_name,// input
           api_key: '123abc'
         }
       };
@@ -1918,17 +1953,51 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
         if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
           if (body.success === true && body.valid_key === true) {
 
-            // variable = body.assetJSONVariable;
+            var workers = body.workers;
+            const current_time = moment();
+
+            var text1 = ``;
+            var voice1 = ``;
+            var text2 = ``;
+            var voice2 = ``;
+
+            for (worker in workers) {
+              // current_time >= moment(worker['worker_begin_date'])   // Removed this, since a worker proposal could be in the future
+              if (current_time <= moment(worker['worker_end_date'])) {
+
+                worker_begin_date = worker['worker_begin_date'];
+                worker_end_date = worker['worker_end_date'];
+                worker_id = worker['id'];
+                total_votes = worker['total_votes_for'];
+                proposal_title = worker['name'];
+                worker_account_details = worker['worker_account_details'];
+                worker_name = worker_account_details['name'];
+
+                if (text1.length <= 640) {
+                  text1 += ``;
+                  voice1 += ``;
+                } else if (text2.length <= 640) {
+                  text2 += ``;
+                  voice2 += ``;
+                } else {
+                  // There's more worker proposal data than there is usable screen space.
+                  break;
+                }
+              } else {
+                // worker proposal is not active
+                continue;
+              }
+            }
 
             let rich_response = app.buildRichResponse(); // Rich Response container
 
             const textToSpeech1 = `<speak>` +
-              `Placeholder.` +
-              `</speak>`;
+                                    `Placeholder.` +
+                                  `</speak>`;
 
             const textToSpeech2 = `<speak>` +
-              `Placeholder.` +
-              `</speak>`;
+                                    `Placeholder.` +
+                                  `</speak>`;
 
             const displayText1 = `Placeholder`;
 
