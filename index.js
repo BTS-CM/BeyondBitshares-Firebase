@@ -1232,6 +1232,228 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       //app.tell(rich_response); // Sending the details to the user & closing app.
     }
 
+    function market_top_uia(app) {
+      /*
+        Most traded UIAs on the BTS DEX (of any type).
+        https://github.com/oxarbitrage/bitshares-python-api-backend
+      */
+      app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+
+      const parameter = {}; // The dict which will hold our parameter data
+      parameter['placeholder'] = 'placeholder'; // We need this placeholder
+      app.setContext('top_markets', 1, parameter); // Need to set the data
+
+      const request_options = {
+        url: `http://23.94.69.140:5000/top_uias`,
+        method: 'GET', // GET request, not POST.
+        json: true,
+        headers: {
+          'User-Agent': 'Beyond Bitshares Bot',
+          'Content-Type': 'application/json'
+        }
+      };
+
+      requestLib(request_options, (err, httpResponse, body) => {
+        if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
+
+            const top_uias = body;
+            var inner_voice = ``;
+            var inner_text = ``;
+
+            var iterator = 1;
+            for (uia in top_uias) {
+              if (inner_text < 640) {
+                inner_voice += `<say-as interpret-as="ordinal">${iterator}</say-as>: ${uia[0]} with ${uia[1]} trading volume.`;
+                inner_text += `${uia[0]}: ${uia[1]}.\n`;
+              } else {
+                break;
+              }
+            }
+
+            let rich_response = app.buildRichResponse(); // Rich Response container
+
+            const textToSpeech1 = `<speak>` +
+                                    `The top traded UIAs on Bitshares are as follows:` +
+                                    inner_voice +
+                                  `</speak>`;
+
+            const displayText1 = `The top traded UIAs on Bitshares are as follows:\n` +
+                                 inner_text;
+
+            rich_response.addSimpleResponse({
+              speech: textToSpeech1,
+              displayText: displayText1
+            });
+
+            if (hasScreen === true) {
+              let basic_card = app.buildBasicCard('Want more info regarding top traded UIAs? Follow this link for more info!')
+                                  .setTitle(`Additional market information!'`)
+                                  .addButton('Block explorer link', `http://open-explorer.io/#/markets`)
+              rich_response.addBasicCard(basic_card)
+            }
+
+            // Note: Only for app.asp, not app.tell.
+            // if (hasScreen === true) {
+            //   rich_response.addSuggestions(['1', '2', '3', 'Quit']);
+            // }
+
+            //app.ask(rich_response); // Sending the details to the user, awaiting input!
+            app.tell(rich_response); // Sending the details to the user & closing app.
+
+        } else {
+          catch_error(app); // Something's wrong with the HUG server!
+        }
+      })
+    }
+
+    function market_top_smartcoins(app) {
+      /*
+        Most traded smartcoins on the BTS DEX (of any type).
+        https://github.com/oxarbitrage/bitshares-python-api-backend
+      */
+      app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+
+      const parameter = {}; // The dict which will hold our parameter data
+      parameter['placeholder'] = 'placeholder'; // We need this placeholder
+      app.setContext('top_markets', 1, parameter); // Need to set the data
+
+      const request_options = {
+        url: `http://23.94.69.140:5000/top_smartcoins`,
+        method: 'GET', // GET request, not POST.
+        json: true,
+        headers: {
+          'User-Agent': 'Beyond Bitshares Bot',
+          'Content-Type': 'application/json'
+        }
+      };
+
+      requestLib(request_options, (err, httpResponse, body) => {
+        if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
+
+            const top_smartcoins = body;
+            var inner_voice = ``;
+            var inner_text = ``;
+
+            var iterator = 1;
+            for (smartcoin in top_smartcoins) {
+              if (inner_text < 640) {
+                inner_voice += `<say-as interpret-as="ordinal">${iterator}</say-as>: ${smartcoin[0]} with ${smartcoin[1]} trading volume.`;
+                inner_text += `${smartcoin[0]}: ${smartcoin[1]}.\n`;
+              } else {
+                break;
+              }
+            }
+
+            let rich_response = app.buildRichResponse(); // Rich Response container
+
+            const textToSpeech1 = `<speak>` +
+                                    `The top traded smartcoins on Bitshares are as follows:` +
+                                    inner_voice +
+                                  `</speak>`;
+
+            const displayText1 = `The top traded smartcoins on Bitshares are as follows:\n` +
+                                 inner_text;
+
+            rich_response.addSimpleResponse({
+              speech: textToSpeech1,
+              displayText: displayText1
+            });
+
+            if (hasScreen === true) {
+              let basic_card = app.buildBasicCard('Want more info regarding top traded smartcoins? Follow this link for more info!')
+                                  .setTitle(`Additional market information!'`)
+                                  .addButton('Block explorer link', `http://open-explorer.io/#/markets`)
+              rich_response.addBasicCard(basic_card)
+            }
+
+            // Note: Only for app.asp, not app.tell.
+            // if (hasScreen === true) {
+            //   rich_response.addSuggestions(['1', '2', '3', 'Quit']);
+            // }
+
+            //app.ask(rich_response); // Sending the details to the user, awaiting input!
+            app.tell(rich_response); // Sending the details to the user & closing app.
+
+        } else {
+          catch_error(app); // Something's wrong with the HUG server!
+        }
+      })
+    }
+
+    function market_top(app) {
+      /*
+        Most traded assets on the BTS DEX (of any type).
+        https://github.com/oxarbitrage/bitshares-python-api-backend
+      */
+      app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+
+      const parameter = {}; // The dict which will hold our parameter data
+      parameter['placeholder'] = 'placeholder'; // We need this placeholder
+      app.setContext('top_markets', 1, parameter); // Need to set the data
+
+      const request_options = {
+        url: `http://23.94.69.140:5000/top_markets`,
+        method: 'GET', // GET request, not POST.
+        json: true,
+        headers: {
+          'User-Agent': 'Beyond Bitshares Bot',
+          'Content-Type': 'application/json'
+        }
+      };
+
+      requestLib(request_options, (err, httpResponse, body) => {
+        if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
+
+            const top_markets = body;
+            var inner_voice = ``;
+            var inner_text = ``;
+
+            var iterator = 1;
+            for (market in top_markets) {
+              if (inner_text < 640) {
+                inner_voice += `<say-as interpret-as="ordinal">${iterator}</say-as>: The ${market[0]} trading pair with ${market[1]} trading volume.`;
+                inner_text += `${market[0]} trading pair with ${market[1]} trading volume.\n`;
+              } else {
+                break;
+              }
+            }
+
+            let rich_response = app.buildRichResponse(); // Rich Response container
+
+            const textToSpeech1 = `<speak>` +
+                                    `The top markets on Bitshares are as follows:` +
+                                    inner_voice +
+                                  `</speak>`;
+
+            const displayText1 = `The top markets on Bitshares are as follows:\n` +
+                                 inner_text;
+
+            rich_response.addSimpleResponse({
+              speech: textToSpeech1,
+              displayText: displayText1
+            });
+
+            if (hasScreen === true) {
+              let basic_card = app.buildBasicCard('Want more info regarding top traded markets? Follow this link for more info!')
+                                  .setTitle(`Additional market information!'`)
+                                  .addButton('Block explorer link', `http://open-explorer.io/#/markets`)
+              rich_response.addBasicCard(basic_card)
+            }
+
+            // Note: Only for app.asp, not app.tell.
+            // if (hasScreen === true) {
+            //   rich_response.addSuggestions(['1', '2', '3', 'Quit']);
+            // }
+
+            //app.ask(rich_response); // Sending the details to the user, awaiting input!
+            app.tell(rich_response); // Sending the details to the user & closing app.
+
+        } else {
+          catch_error(app); // Something's wrong with the HUG server!
+        }
+      })
+    }
+
     function market_24HRVolume(app) {
       /*
         market_24HRVolume function
@@ -1963,22 +2185,23 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
 
             for (worker in workers) {
               // current_time >= moment(worker['worker_begin_date'])   // Removed this, since a worker proposal could be in the future
-              if (current_time <= moment(worker['worker_end_date'])) {
+              const worker_begin_date = worker['worker_begin_date'];
+              const worker_end_date = worker['worker_end_date'];
 
-                worker_begin_date = worker['worker_begin_date'];
-                worker_end_date = worker['worker_end_date'];
-                worker_id = worker['id'];
-                total_votes = worker['total_votes_for'];
-                proposal_title = worker['name'];
-                worker_account_details = worker['worker_account_details'];
-                worker_name = worker_account_details['name'];
+              if (current_time <= moment(worker_end_date)) {
+
+                const worker_id = worker['id'];
+                const total_votes = worker['total_votes_for'];
+                const proposal_title = worker['name'];
+                const worker_account_details = worker['worker_account_details'];
+                const worker_name = worker_account_details['name'];
 
                 if (text1.length <= 640) {
-                  text1 += ``;
-                  voice1 += ``;
+                  text1 += `${worker_name}'s '"${proposal_title}" with ${total_votes} votes.'`;
+                  voice1 += `${worker_name}'s ${proposal_title} has ${total_votes}`;
                 } else if (text2.length <= 640) {
-                  text2 += ``;
-                  voice2 += ``;
+                  text2 += `${worker_name}'s '"${proposal_title}" with ${total_votes} votes.'`;
+                  voice2 += `${worker_name}'s ${proposal_title} has ${total_votes}`;
                 } else {
                   // There's more worker proposal data than there is usable screen space.
                   break;
@@ -1992,26 +2215,33 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
             let rich_response = app.buildRichResponse(); // Rich Response container
 
             const textToSpeech1 = `<speak>` +
-                                    `Placeholder.` +
+                                    voice1 +
                                   `</speak>`;
-
-            const textToSpeech2 = `<speak>` +
-                                    `Placeholder.` +
-                                  `</speak>`;
-
-            const displayText1 = `Placeholder`;
-
-            const displayText2 = `Placeholder`;
+            const displayText1 = text1;
 
             rich_response.addSimpleResponse({
               speech: textToSpeech1,
               displayText: displayText1
             });
 
-            rich_response.addSimpleResponse({
-              speech: textToSpeech2,
-              displayText: displayText2
-            });
+            if (text2.length() > 1) {
+              const textToSpeech2 = `<speak>` +
+                                      voice2 +
+                                    `</speak>`;
+              const displayText2 = text2;
+
+              rich_response.addSimpleResponse({
+                speech: textToSpeech2,
+                displayText: displayText2
+              });
+            }
+
+            if (hasScreen === true) {
+              let basic_card = app.buildBasicCard('Desire additional worker proposal information? Follow this link for more info!')
+                                  .setTitle(`Additional worker proposal information available!'`)
+                                  .addButton('Block explorer link', `http://open-explorer.io/#/http://open-explorer.io/#/workers`)
+              rich_response.addBasicCard(basic_card)
+            }
 
             // Note: Only for app.asp, not app.tell.
             // if (hasScreen === true) {
@@ -2040,8 +2270,9 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       const parameter = {}; // The dict which will hold our parameter data
       parameter['placeholder'] = 'placeholder'; // We need this placeholder
       app.setContext('worker_One', 1, parameter); // Need to set the data
+
       const request_options = {
-        url: `${hug_host}/get_asset`,
+        url: `${hug_host}/get_worker`,
         method: 'GET', // GET request, not POST.
         json: true,
         headers: {
@@ -2049,45 +2280,61 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
           'Content-Type': 'application/json'
         },
         qs: { // qs instead of form - because this is a GET request
-          asset_name: input_asset_name,// input
+          worker_id: input_worker_id,// input
           api_key: '123abc'
         }
       };
 
       requestLib(request_options, (err, httpResponse, body) => {
         if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
-          if (body.success === true && body.valid_key === true) {
+          if (body.valid_worker === true && body.valid_key === true) {
 
-            // variable = body.assetJSONVariable;
+            const worker = body.worker;
+
+            const worker_begin_date = worker['worker_begin_date'].split("T")[0];
+            const worker_end_date = worker['worker_end_date'].split("T")[0];
+            const worker_id = worker['id'];
+            const total_votes = worker['total_votes_for'];
+            const proposal_title = worker['name'];
+            const worker_account_details = worker['worker_account_details'];
+            const worker_name = worker_account_details['name'];
+            const url = worker['url'];
 
             let rich_response = app.buildRichResponse(); // Rich Response container
 
             const textToSpeech1 = `<speak>` +
-              `Placeholder.` +
-              `</speak>`;
+                                    `Here's information regarding worker proposal ${worker_id}:` +
+                                    `Title: ${proposal_title}.` +
+                                    `Start date: ${worker_begin_date}.` +
+                                    `End date: ${worker_end_date}.` +
+                                    `Worker account name: ${worker_name}.` +
+                                    `Total votes: ${total_votes}.` +
+                                  `</speak>`;
 
-            const textToSpeech2 = `<speak>` +
-              `Placeholder.` +
-              `</speak>`;
-
-            const displayText1 = `Placeholder`;
-
-            const displayText2 = `Placeholder`;
+            const displayText1 =  `Here's information regarding worker proposal ${worker_id}:` +
+                                  `Title: ${proposal_title}.` +
+                                  `Start date: ${worker_begin_date}.` +
+                                  `End date: ${worker_end_date}.` +
+                                  `Worker account name: ${worker_name}.` +
+                                  `Total votes: ${total_votes}.` +
+                                  `URL: ${url}`;
 
             rich_response.addSimpleResponse({
               speech: textToSpeech1,
               displayText: displayText1
             });
 
-            rich_response.addSimpleResponse({
-              speech: textToSpeech2,
-              displayText: displayText2
-            });
-
             // Note: Only for app.asp, not app.tell.
             // if (hasScreen === true) {
             //   rich_response.addSuggestions(['1', '2', '3', 'Quit']);
             // }
+
+            if (hasScreen === true) {
+              let basic_card = app.buildBasicCard('Desire additional worker proposal information? Follow this link for more info!')
+                                  .setTitle(`Additional worker proposal information available!'`)
+                                  .addButton('Block explorer link', `http://open-explorer.io/#/objects/${worker_id}`)
+              rich_response.addBasicCard(basic_card)
+            }
 
             //app.ask(rich_response); // Sending the details to the user, awaiting input!
             app.tell(rich_response); // Sending the details to the user & closing app.
@@ -2246,61 +2493,6 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
       fallbackCard.addSimpleResponse(current_fallback_phrase);
       if (hasScreen === true) {
         fallbackCard.addSuggestions([`A`, `B`, `C`, `Quit`]);
-      }
-      handleFallback(app, () => {
-        app.ask(fallbackCard);
-      });
-    }
-
-    function handle_no_contexts(app) {
-      /*
-      Any ghost contexts shall never haunt us again!
-      We shall catch cases where the user got to an intent when they shouldn't have.
-      Shouldn't be neccessary with correct dialogflow input contexts... :(
-      */
-      app.setContext('handle_no_contexts', 1, {
-        "placeholder": "placeholder"
-      });
-
-      let no_context_card = app.buildRichResponse();
-
-      const textToSpeech = `<speak>` +
-        `Sorry, you've taken the wrong turn. <break time="0.5s" /> ` +
-        `What would you like to do instead? <break time="0.25s" /> ` +
-        `</speak>`;
-
-      no_context_card.addSimpleResponse({
-        speech: textToSpeech,
-        displayText: `Sorry, you've taken the wrong turn.! \n\n ` +
-          `What would you like to do instead?`
-      });
-
-      if (hasScreen === true) {
-        no_context_card.addSuggestions(['A', 'B', 'C', `D`, 'Help', `Quit`]);
-      }
-
-      app.ask(no_context_card); // FIRE!
-    }
-
-    function handleNoContextsFallback(app) {
-      /*
-      Fallback function for the GOAT intent!
-      */
-      console.log("HANDLE NO CONTEXTS FALLBACK TRIGGERED!");
-
-      const NO_CONTEXTS_FALLBACK = [
-        "Sorry, what do you want to do next?",
-        "I didn't catch that. Do you want to A, B or C?",
-        "I'm having difficulties understanding what you want to do with Beyond Bitshares. Do you want to A, B, C or D?"
-      ];
-
-      let current_fallback_phrase = NO_CONTEXTS_FALLBACK[app.data.fallbackCount];
-
-      let fallbackCard = app.buildRichResponse();
-      fallbackCard.addSimpleResponse(current_fallback_phrase);
-      if (hasScreen === true) {
-        // The user has a screen, thus let's show them suggestion chips!
-        fallbackCard.addSuggestions(['A', 'B', 'C', `D`, 'Help', `Quit`]);
       }
       handleFallback(app, () => {
         app.ask(fallbackCard);
