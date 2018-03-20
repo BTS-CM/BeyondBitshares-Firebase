@@ -1,0 +1,73 @@
+function market_top_smartcoins(app) {
+  /*
+    Most traded smartcoins on the BTS DEX (of any type).
+    https://github.com/oxarbitrage/bitshares-python-api-backend
+  */
+  app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+
+  const parameter = {}; // The dict which will hold our parameter data
+  parameter['placeholder'] = 'placeholder'; // We need this placeholder
+  app.setContext('top_markets', 1, parameter); // Need to set the data
+
+  const request_options = {
+    url: `http://23.94.69.140:5000/top_smartcoins`,
+    method: 'GET', // GET request, not POST.
+    json: true,
+    headers: {
+      'User-Agent': 'Beyond Bitshares Bot',
+      'Content-Type': 'application/json'
+    }
+  };
+
+  requestLib(request_options, (err, httpResponse, body) => {
+    if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
+
+        const top_smartcoins = body;
+        var inner_voice = ``;
+        var inner_text = ``;
+
+        var iterator = 1;
+        for (smartcoin in top_smartcoins) {
+          if (inner_text < 640) {
+            inner_voice += `<say-as interpret-as="ordinal">${iterator}</say-as>: ${smartcoin[0]} with ${smartcoin[1]} trading volume.`;
+            inner_text += `${smartcoin[0]}: ${smartcoin[1]}.\n`;
+          } else {
+            break;
+          }
+        }
+
+        let rich_response = app.buildRichResponse(); // Rich Response container
+
+        const textToSpeech1 = `<speak>` +
+                                `The top traded smartcoins on Bitshares are as follows:` +
+                                inner_voice +
+                              `</speak>`;
+
+        const displayText1 = `The top traded smartcoins on Bitshares are as follows:\n` +
+                             inner_text;
+
+        rich_response.addSimpleResponse({
+          speech: textToSpeech1,
+          displayText: displayText1
+        });
+
+        if (hasScreen === true) {
+          let basic_card = app.buildBasicCard('Want more info regarding top traded smartcoins? Follow this link for more info!')
+                              .setTitle(`Additional market information!'`)
+                              .addButton('Block explorer link', `http://open-explorer.io/#/markets`)
+          rich_response.addBasicCard(basic_card)
+        }
+
+        // Note: Only for app.asp, not app.tell.
+        // if (hasScreen === true) {
+        //   rich_response.addSuggestions(['1', '2', '3', 'Quit']);
+        // }
+
+        //app.ask(rich_response); // Sending the details to the user, awaiting input!
+        app.tell(rich_response); // Sending the details to the user & closing app.
+
+    } else {
+      catch_error(app); // Something's wrong with the HUG server!
+    }
+  })
+}

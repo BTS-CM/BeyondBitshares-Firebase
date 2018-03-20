@@ -106,10 +106,7 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
 
     function welcome(app) {
       /*
-      The welcome function is called from the end of the updatePermission (and userData) function.
-      This greets the user, and suggests training & recommendation chips.
-      If we're quiting the training section, we do not return here, rather the home/welcome intent created in dialogflow.
-
+      The default welcome intent
       */
       app.data.fallbackCount = 0; // Required for tracking fallback attempts!
 
@@ -509,7 +506,6 @@ exports.BeyondBitshares = functions.https.onRequest((req, res) => {
         }
       })
     }
-
 
     function asset(app) {
       /*
