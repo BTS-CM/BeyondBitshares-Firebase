@@ -5,7 +5,7 @@ const {
   Suggestions,
   BasicCard,
   Button,
-  SimpleResponse,
+  SimpleResponse
 } = require('actions-on-google')
 
 const util = require('util')
@@ -17,7 +17,18 @@ const moment = require('moment'); // For handling time.
 const hug_host = 'https://btsapi.grcnode.co.uk'; // Change this to your own HUG REST API server (if you want)
 const app = dialogflow({ debug: true }) // Creating the primary dialogflow app element
 
-if (app.isRequestFromDialogflow("key", "value")) {
+function catch_error(app) {
+  /*
+  Generally used when there's a small illogical error.
+  */
+  conv.close(new SimpleResponse({
+    // Sending the details to the user
+    speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+    displayText: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+  }));
+}
+
+//if (app.isRequestFromDialogflow("key", "value")) {
   /*
     We're checking that the webhook request actually came from dialogflow.
     Why? For security & because it's required before submitting to google for approval.
@@ -26,8 +37,9 @@ if (app.isRequestFromDialogflow("key", "value")) {
   //console.log("REQUEST IS FROM DIALOGFLOW!");
 
   // Detecting the capabilities of the user's device!
-  const hasScreen = app.hasSurfaceCapability(app.SurfaceCapabilities.SCREEN_OUTPUT);
-  const hasAudio = app.hasSurfaceCapability(app.SurfaceCapabilities.AUDIO_OUTPUT);
+  //const hasScreen = app.hasSurfaceCapability(app.SurfaceCapabilities.SCREEN_OUTPUT);
+  //const hasAudio = app.hasSurfaceCapability(app.SurfaceCapabilities.AUDIO_OUTPUT);
+
   //console.log(`Screen: ${hasScreen}, Audio: ${hasAudio}!`);
 
   app.intent('Welcome', (conv) => {
@@ -47,13 +59,19 @@ if (app.isRequestFromDialogflow("key", "value")) {
       `What would you like to do? ` +
       `</speak>`;
 
-    conv.ask(new SimpleResponse(
-      speech:textToSpeech,
-      displayText:
-    ))
+    const textToDisplay = `Hey, welcome to Beyond Bitshares!\n\n` +
+          `Beyond Bitshares provides information regarding Bitshares on demand.\n\n` +
+          `You can request information about the network, accounts, assets, committee members, witnesses, worker proposals, fees, etc.` +
+          `What would you like to do?`;
 
+    conv.ask(new SimpleResponse({
+      speech: textToSpeech,
+      displayText: textToDisplay
+    }));
+
+    const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
     if (hasScreen === true) {
-      conv.ask(new Suggestions('About', 'Accounts', 'Assets', 'Blockchain', 'Committee', 'Markets', 'Network', 'Workers', 'Fees', 'Help', 'Quit'))
+      conv.ask(new Suggestions('About', 'Accounts', 'Assets', 'Blockchain', 'Committee', 'Markets', 'Network', 'Workers', 'Fees', 'Help', 'Quit'));
     }
   })
 
@@ -68,7 +86,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
     app.setContext('about', 1, about_param); // Need to set the data
 
     const textToSpeech1 = `<speak>` +
-      `The BitShares platform has numerous innovative features which are not found elsewhere within the smart contract industry such as:`
+      `The BitShares platform has numerous innovative features which are not found elsewhere within the smart contract industry such as:` +
     `Price-Stable Cryptocurrencies - SmartCoins provide the freedom of cryptocurrency with the stability of FIAT assets.` +
     `Decentralized Asset Exchange - A fast and fluid trading platform` +
     `Industrial Performance and Scalability - Proven 3k TPS, theoretical 100k limit.` +
@@ -82,35 +100,36 @@ if (app.isRequestFromDialogflow("key", "value")) {
       `Stakeholder-Approved Project Funding - A self-sustaining funding model.` +
       `Transferable Named Accounts - Easy and secure transactions.` +
       `Delegated Proof-of-Stake Consensus - A robust and flexible consensus protocol.` +
-      `Want to know more about any of Bitshares features?`
+      `Want to know more about any of Bitshares features?` +
     `</speak>`;
 
-    const displayText1 = `The BitShares platform has numerous innovative features which are not found elsewhere within the smart contract industry such as: \n\n`
+    const displayText1 = `The BitShares platform has numerous innovative features which are not found elsewhere within the smart contract industry such as: \n\n` +
     `Price-Stable Cryptocurrencies - SmartCoins provide the freedom of cryptocurrency with the stability of FIAT assets.\n\n` +
     `Decentralized Asset Exchange - A fast and fluid trading platform.\n\n` +
     `Industrial Performance and Scalability - Proven 3k TPS, theoretical 100k limit.\n\n` +
     `Dynamic Account Permissions - Management for the corporate environment.\n\n` +
     `Recurring & Scheduled Payments - Flexible withdrawal permissions.`;
 
-    const displayText1 = `Referral Rewards Program - Network growth through adoption rewards.\n\n` +
+    const displayText2 = `Referral Rewards Program - Network growth through adoption rewards.\n\n` +
       `User-Issued Assets - Regulation-compatible cryptoasset issuance.\n\n` +
       `Stakeholder-Approved Project Funding - A self-sustaining funding model.\n\n` +
       `Transferable Named Accounts - Easy and secure transactions.\n\n` +
       `Delegated Proof-of-Stake Consensus - A robust and flexible consensus protocol.\n\n` +
       `Want to know more about any of Bitshares features?`;
 
-    conv.ask(new SimpleResponse(
+    conv.ask(new SimpleResponse({
       speech: textToSpeech1,
       displayText: displayText1
-    ))
+    }));
 
-    conv.ask(new SimpleResponse(
+    conv.ask(new SimpleResponse({
       speech: textToSpeech2,
       displayText: displayText2
-    ))
+    }));
 
+    const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
     if (hasScreen === true) {
-      conv.ask(new Suggestions('Delegated Proof-of-Stake Consensus', 'Price-Stable Cryptocurrencies', 'Decentralized Asset Exchange', 'Industrial Performance and Scalability', 'Dynamic Account Permissions', 'Recurring & Scheduled Payments', 'Referral Rewards Program', 'User-Issued Assets', 'Stakeholder-Approved Project Funding', 'Transferable Named Accounts', 'Help', 'Quit'))
+      conv.ask(new Suggestions('Delegated Proof-of-Stake Consensus', 'Price-Stable Cryptocurrencies', 'Decentralized Asset Exchange', 'Industrial Performance and Scalability', 'Dynamic Account Permissions', 'Recurring & Scheduled Payments', 'Referral Rewards Program', 'User-Issued Assets', 'Stakeholder-Approved Project Funding', 'Transferable Named Accounts', 'Help', 'Quit'));
     }
   })
 
@@ -148,18 +167,19 @@ if (app.isRequestFromDialogflow("key", "value")) {
 
     const displayText2 = `What do you want to find out about an account?`;
 
-    conv.ask(new SimpleResponse(
+    conv.ask(new SimpleResponse({
       speech: textToSpeech1,
       displayText: displayText1
-    ))
+    }));
 
-    conv.ask(new SimpleResponse(
+    conv.ask(new SimpleResponse({
       speech: textToSpeech2,
       displayText: displayText2
-    ))
+    }));
 
+    const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
     if (hasScreen === true) {
-      conv.ask(new Suggestions(`Account's Basic Overview`, 'Account Balances', `Account's Open Orders`, `Account's Trade History`, `Account's Call Positions`, 'Help', 'Quit')
+      conv.ask(new Suggestions(`Account's Basic Overview`, 'Account Balances', `Account's Open Orders`, `Account's Trade History`, `Account's Call Positions`, 'Help', 'Quit'));
     }
   })
 
@@ -191,7 +211,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
     };
 
     requestLib(request_options, (err, httpResponse, body) => {
-      if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
+      if (!err && httpResponse.statusCode === 200) { // Check that the GET request didn't encounter any issues!
         if (body.success === true && body.valid_key === true) {
 
           var text = ``;
@@ -206,7 +226,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
                 if (text.length < 640) {
                   asset_name = Object.keys(balance)[0];
 
-                  if (index != (account_balances.length - 1)) {
+                  if (index !==(account_balances.length - 1)) {
                     text += `${asset_name}: ${balance} \n`;
                   } else {
                     // Final line
@@ -233,14 +253,15 @@ if (app.isRequestFromDialogflow("key", "value")) {
 
           const displayText = text;
 
-          conv.ask(new SimpleResponse(
+          conv.ask(new SimpleResponse({
             speech: textToSpeech,
             displayText: displayText
-          ))
+          }));
 
+          const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
           if (hasScreen === true) {
             if (many_balances === true) {
-              conv.ask(new BasicCard(
+              conv.ask(new BasicCard({
                 title: `Insufficient space to display ${input_account}'s balances!'`,
                 displayText: 'This account has too many balances to show. Please navigate to the linked block explorer.',
 
@@ -249,7 +270,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
                   url: `http://open-explorer.io/#/accounts/${input_account}`,
                 }),
                 display: 'WHITE'
-              ))
+              }))
             }
           }
         } else {
@@ -288,7 +309,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
     };
 
     requestLib(request_options, (err, httpResponse, body) => {
-      if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
+      if (!err && httpResponse.statusCode === 200) { // Check that the GET request didn't encounter any issues!
         if (body.success === true && body.valid_key === true) {
 
           var text = ``;
@@ -309,7 +330,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
                     call_price = call.call_price; //call_price.<base|quote>.<symbol|amount>
                     ratio = call.ratio;
 
-                    if (index != (account_balances.length - 1)) {
+                    if (index !==(account_balances.length - 1)) {
                       text += `${asset_name}: ${debt.amount}, collateral: ${collateral.amount} ${collateral.symbol}, ratio: ${ratio}.\n`;
                     } else {
                       // Final line
@@ -330,18 +351,18 @@ if (app.isRequestFromDialogflow("key", "value")) {
             }
           }
 
-          const textToSpeech1 = `<speak>` +
+          const textToSpeech = `<speak>` +
             `${input_account}'s call positions are:`
             voice +
             `</speak>`;
 
-          const displayText1 = `${input_account}'s call positions are:` +
-                               voice;
+          const displayText = `${input_account}'s call positions are:` + voice;
 
-          conv.close(
-            speech: textToSpeech,
-            displayText: displayText
-          );
+          conv.close(new SimpleResponse({
+           // Sending the details to the user & closing app.
+           speech: textToSpeech,
+           displayText: displayText
+         }))
         } else {
           catch_error(app); // Something's wrong with the HUG server!
         }
@@ -376,7 +397,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
     };
 
     requestLib(request_options, (err, httpResponse, body) => {
-      if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
+      if (!err && httpResponse.statusCode === 200) { // Check that the GET request didn't encounter any issues!
         if (body.success === true && body.valid_key === true) {
 
           const info = body.account_info; // This var holds the account's call positions
@@ -394,11 +415,11 @@ if (app.isRequestFromDialogflow("key", "value")) {
           const displayText = `Found information regarding ${input_account}:` +
                                `${name}'s ID is ${id}, they were registered by ${registrar} and have voted for ${witness_votes} witnesses and ${committee_votes} committee members.`;
 
-          conv.close(new SimpleResponse(
+          conv.close(new SimpleResponse({
            // Sending the details to the user & closing app.
            speech: textToSpeech,
            displayText: displayText
-          ))
+         }))
 
         } else {
           catch_error(app); // Something's wrong with the HUG server!
@@ -433,12 +454,13 @@ if (app.isRequestFromDialogflow("key", "value")) {
             `Top User Issued Assets.` +
             `What do you want to know about Bitshares assets?`;
 
-    conv.ask(new SimpleResponse(
+    conv.ask(new SimpleResponse({
       // Sending the details to the user
       speech: textToSpeech,
       displayText: displayText
-    ))
+    }));
 
+    const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
     if (hasScreen === true) {
       conv.ask(new Suggestions('Top Smartcoins', 'Top UIAs', 'Back', 'Help', 'Quit'));
     }
@@ -469,7 +491,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
     };
 
     requestLib(request_options, (err, httpResponse, body) => {
-      if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
+      if (!err && httpResponse.statusCode === 200) { // Check that the GET request didn't encounter any issues!
         if (body.success === true && body.valid_key === true) {
 
           asset_data = body.asset_data;
@@ -482,7 +504,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
             `Current supply: ${asset_data['dynamic_asset_data']['current_supply']}` +
             `Confidential supply: ${asset_data['dynamic_asset_data']['confidential_supply']}` +
             `Accumulated Fees: ${asset_data['dynamic_asset_data']['accumulated_fees']}` +
-            `Fee pool: ${asset_data['dynamic_asset_data']['fee_pool']}`
+            `Fee pool: ${asset_data['dynamic_asset_data']['fee_pool']}` +
             `</speak>`;
 
           const displayText = `${input_asset_name} information:` +
@@ -494,11 +516,11 @@ if (app.isRequestFromDialogflow("key", "value")) {
           `Accumulated Fees: ${asset_data['dynamic_asset_data']['accumulated_fees']}` +
           `Fee pool: ${asset_data['dynamic_asset_data']['fee_pool']}`;
 
-          conv.close(new SimpleResponse(
+          conv.close(new SimpleResponse({
             // Sending the details to the user & closing app.
             speech: textToSpeech,
             displayText: displayText
-          ))
+          }))
         } else {
           catch_error(app); // Something's wrong with the HUG server!
         }
@@ -519,23 +541,24 @@ if (app.isRequestFromDialogflow("key", "value")) {
     app.setContext('block', 1, parameter); // Need to set the data
 
     const textToSpeech = `<speak>` +
-      `What kind of block information do you seek?`
+      `What kind of block information do you seek?` +
       `Latest block details.` +
       `Specific block details.` +
       `An overview of the blockchain.` +
       `</speak>`;
 
-    const displayText = `What kind of block information do you seek?`
+    const displayText = `What kind of block information do you seek?` +
       `The latest block details?` +
       `A specific block's details?` +
       `Perhaps an overview of the blockchain?`;
 
-    conv.ask(new SimpleResponse(
+    conv.ask(new SimpleResponse({
       // Sending the details to the user
       speech: textToSpeech,
       displayText: displayText
-    ))
+    }));
 
+    const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
     if (hasScreen === true) {
       conv.ask(new Suggestions('Latest block details', 'Blockchain overview', 'Help', 'Back', 'Quit'));
     }
@@ -564,7 +587,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
     };
 
     requestLib(request_options, (err, httpResponse, body) => {
-      if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
+      if (!err && httpResponse.statusCode === 200) { // Check that the GET request didn't encounter any issues!
         if (body.valid_block_number === true && body.valid_key === true) {
 
           const previous = body.previous;
@@ -582,21 +605,20 @@ if (app.isRequestFromDialogflow("key", "value")) {
             `</speak>`;
 
           const displayText = `Block ${block_number} (ID: ${block_id}) is the latest Bitshares block.\n\n` +
-                                `The previous block was ${previous}, with a TX merkle root of ${transaction_merkle_root}.\n\n`
+                                `The previous block was ${previous}, with a TX merkle root of ${transaction_merkle_root}.\n\n` +
                                 `It was produced on ${block_date} by witness with ID ${witness}.\n\n` +
                                 `There were ${tx_count} transactions in the block.`;
 
-          conv.close(new SimpleResponse(
+          conv.close(new SimpleResponse({
             // Sending the details to the user
             speech: textToSpeech,
             displayText: displayText
-          ))
+          }))
 
-
-          // NOT SURE IF A SECOND CONV.CLOSE CAN OCCUR!
+          const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
           if (hasScreen === true) {
 
-            conv.close(new BasicCard(
+            conv.close(new BasicCard({
               title: `More block info available!'`,
               displayText: 'Interested in more block information?',
               buttons: new Button({
@@ -604,7 +626,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
                 url: `http://open-explorer.io/#/search`,
               }),
               display: 'WHITE'
-            ))
+            }))
           }
 
         } else {
@@ -642,7 +664,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
     };
 
     requestLib(request_options, (err, httpResponse, body) => {
-      if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
+      if (!err && httpResponse.statusCode === 200) { // Check that the GET request didn't encounter any issues!
         if (body.valid_block_number === true && body.valid_key === true) {
 
           const previous = body.previous;
@@ -659,31 +681,25 @@ if (app.isRequestFromDialogflow("key", "value")) {
             `</speak>`;
 
           const displayText = `Info regarding block number ${block_number}:\n\n` +
-                                `The previous block was ${previous}, with a TX merkle root of ${transaction_merkle_root}.\n\n`
+                                `The previous block was ${previous}, with a TX merkle root of ${transaction_merkle_root}.\n\n` +
                                 `It was produced on ${timestamp} by witness with ID ${witness}.\n\n` +
                                 `There were ${tx_count} transactions in the block.`;
 
-          conv.close(new SimpleResponse(
+          conv.close(new SimpleResponse({
             // Sending the details to the user
             speech: textToSpeech,
             displayText: displayText
-          ))
+          }))
 
-          /*
-          // NOT SURE IF A SECOND CONV.CLOSE CAN OCCUR!
-          if (hasScreen === true) {
-
-            conv.close(new BasicCard(
-              title: `More block info available!'`,
-              displayText: 'Interested in more block information?',
-              buttons: new Button({
-                title: 'Block explorer link',
-                url: `http://open-explorer.io/#/blocks/${block_number}`,
-              }),
-              display: 'WHITE'
-            ))
-          }
-          */
+          conv.close(new BasicCard({
+            title: `More block info available!'`,
+            displayText: 'Interested in more block information?',
+            buttons: new Button({
+              title: 'Block explorer link',
+              url: `http://open-explorer.io/#/blocks/${block_number}`,
+            }),
+            display: 'WHITE'
+          }))
         } else {
           catch_error(app); // Something's wrong with the HUG server!
         }
@@ -717,7 +733,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
     };
 
     requestLib(request_options, (err, httpResponse, body) => {
-      if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
+      if (!err && httpResponse.statusCode === 200) { // Check that the GET request didn't encounter any issues!
         if (body.success === true && body.valid_key === true) {
 
           chain_info = body.chain_info;
@@ -744,11 +760,11 @@ if (app.isRequestFromDialogflow("key", "value")) {
                               `recently_missed_count: ${chain_info['recently_missed_count']}.` +
                               `last_irreversible_block_num: ${chain_info['last_irreversible_block_num']}.`;
 
-          conv.close(new SimpleResponse(
+          conv.close(new SimpleResponse({
             // Sending the details to the user
             speech: textToSpeech,
             displayText: displayText
-          ))
+          }))
 
         } else {
           catch_error(app); // Something's wrong with the HUG server!
@@ -778,14 +794,15 @@ if (app.isRequestFromDialogflow("key", "value")) {
     const displayText = `Do you want to look up the active committee members, or a single committee member?` +
     `If the later, please accurately specify their account name`;
 
-    conv.ask(new SimpleResponse(
+    conv.ask(new SimpleResponse({
       // Sending the details to the user
       speech: textToSpeech,
       displayText: displayText
-    ))
+    }));
 
+    const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
     if (hasScreen === true) {
-      conv.ask(new Suggestions('Active committee members', 'Help', 'Back', 'Quit'))
+      conv.ask(new Suggestions('Active committee members', 'Help', 'Back', 'Quit'));
     }
 
   })
@@ -814,7 +831,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
     };
 
     requestLib(request_options, (err, httpResponse, body) => {
-      if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
+      if (!err && httpResponse.statusCode === 200) { // Check that the GET request didn't encounter any issues!
         if (body.success === true && body.valid_key === true) {
 
           var text = ``;
@@ -847,15 +864,16 @@ if (app.isRequestFromDialogflow("key", "value")) {
 
           const displayText = text;
 
-          conv.close(new SimpleResponse(
+          conv.close(new SimpleResponse({
             // Sending the details to the user
             speech: textToSpeech,
             displayText: displayText
-          ));
+          }))
 
+          const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
           if (hasScreen === true) {
             if (more_than_640 === true) {
-              conv.close(new BasicCard(
+              conv.close(new BasicCard({
                 title: `Insufficient space to display committee members!`,
                 displayText: 'There are more Committee member to display! Please navigate to the linked block explorer.',
 
@@ -864,7 +882,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
                   url: 'http://open-explorer.io/#/committee_members',
                 }),
                 display: 'WHITE'
-              ))
+              }))
             }
           }
         } else {
@@ -902,7 +920,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
     };
 
     requestLib(request_options, (err, httpResponse, body) => {
-      if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
+      if (!err && httpResponse.statusCode === 200) { // Check that the GET request didn't encounter any issues!
         if (body.success === true && body.valid_key === true) {
 
           const get_committee_member_data = body.get_committee_member;
@@ -912,7 +930,6 @@ if (app.isRequestFromDialogflow("key", "value")) {
           const committee_member_details = get_committee_member_data['committee_member_details'];
           const name = committee_member_details['name'];
           const registrar = committee_member_details['registrar'];
-          const name = committee_member_details['name'];
           const committee_status = committee_member_details['status'];
 
           var committee_status_string = ``;
@@ -935,11 +952,11 @@ if (app.isRequestFromDialogflow("key", "value")) {
           `They were registered by ${registrar}.` +
           `They currently have ${total_votes} votes, and are ${committee_status_string} active committee member.`;
 
-          conv.close(new SimpleResponse(
+          conv.close(new SimpleResponse({
             // Sending the details to the user
             speech: textToSpeech,
             displayText: displayText
-          ));
+          }));
 
         } else {
           catch_error(app); // Something's wrong with the HUG server!
@@ -975,7 +992,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
     };
 
     requestLib(request_options, (err, httpResponse, body) => {
-      if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
+      if (!err && httpResponse.statusCode === 200) { // Check that the GET request didn't encounter any issues!
         if (body.success === true && body.valid_key === true) {
 
           fees = body.network_fees;
@@ -991,7 +1008,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
             `Worker proposal creation ${fees['worker_create']['fee']}` +
             `</speak>`;
 
-          const displayText1 =  `Market fees:\n`
+          const displayText1 =  `Market fees:\n` +
                                 `Asset transfer: ${fees['transfer']['fee']}\n` +
                                 `Limit order create: ${fees['limit_order_create']['fee']}\n` +
                                 `Limit order cancel: ${fees['limit_order_cancel']['fee']}\n` +
@@ -1040,20 +1057,21 @@ if (app.isRequestFromDialogflow("key", "value")) {
                                 `Transfer from blind: ${fees['transfer_from_blind']['fee']}\n` +
                                 `Asset claim fees: ${fees['asset_claim_fees']['fee']}\n`;
 
-          conv.close(new SimpleResponse(
+          conv.close(new SimpleResponse({
             // Sending the details to the user
             speech: textToSpeech1,
             displayText: displayText1
-          ));
+          }));
 
-          conv.close(new SimpleResponse(
+          conv.close(new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: '',
             displayText: displayText2
-          ));
+          }));
 
+          const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
           if (hasScreen === true) {
-            conv.close(new BasicCard(
+            conv.close(new BasicCard({
               title: `Additional info available regarding BTS fees!`,
               displayText: 'Want more info on Bitshares network fees? Follow this link for more info! Remember that your elected committee members set these fees!',
 
@@ -1062,7 +1080,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
                 url: 'http://open-explorer.io/#/fees',
               }),
               display: 'WHITE'
-            ))
+            }))
           }
         } else {
           catch_error(app); // Something's wrong with the HUG server!
@@ -1104,20 +1122,21 @@ if (app.isRequestFromDialogflow("key", "value")) {
 
     const displayText2 =  `What do you want to do? Remember to provide the trading pair in your query!`;
 
-    conv.ask(new SimpleResponse(
+    conv.ask(new SimpleResponse({
       // Sending the details to the user
       speech: textToSpeech1,
       displayText: displayText1
-    ));
+    }));
 
-    conv.ask(new SimpleResponse(
+    conv.ask(new SimpleResponse({
       // Sending the details to the user
       speech: textToSpeech2,
       displayText: displayText2
-    ));
+    }));
 
+    const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
     if (hasScreen === true) {
-      conv.ask(new Suggestions('Back', 'Help', 'Quit'))
+      conv.ask(new Suggestions('Back', 'Help', 'Quit'));
     }
   })
 
@@ -1143,48 +1162,49 @@ if (app.isRequestFromDialogflow("key", "value")) {
     };
 
     requestLib(request_options, (err, httpResponse, body) => {
-      if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
+      if (!err && httpResponse.statusCode === 200) { // Check that the GET request didn't encounter any issues!
 
-          const top_uias = body;
-          var inner_voice = ``;
-          var inner_text = ``;
+      const top_uias = body;
+      var inner_voice = ``;
+      var inner_text = ``;
 
-          var iterator = 1;
-          for (uia in top_uias) {
-            if (inner_text < 640) {
-              inner_voice += `<say-as interpret-as="ordinal">${iterator}</say-as>: ${uia[0]} with ${uia[1]} trading volume.`;
-              inner_text += `${uia[0]}: ${uia[1]}.\n`;
-            } else {
-              break;
-            }
-          }
+      var iterator = 1;
+      for (uia in top_uias) {
+        if (inner_text < 640) {
+          inner_voice += `<say-as interpret-as="ordinal">${iterator}</say-as>: ${uia[0]} with ${uia[1]} trading volume.`;
+          inner_text += `${uia[0]}: ${uia[1]}.\n`;
+        } else {
+          break;
+        }
+      }
 
-          const textToSpeech = `<speak>` +
-                                  `The top traded UIAs on Bitshares are as follows:` +
-                                  inner_voice +
-                                `</speak>`;
+      const textToSpeech = `<speak>` +
+                          `The top traded UIAs on Bitshares are as follows:` +
+                          inner_voice +
+                        `</speak>`;
 
-          const displayText = `The top traded UIAs on Bitshares are as follows:\n` +
-                               inner_text;
+      const displayText = `The top traded UIAs on Bitshares are as follows:\n` +
+                       inner_text;
 
-          conv.close(new SimpleResponse(
-           // No speech here, because we don't want to read everything out!
-           speech: textToSpeech,
-           displayText: displayText
-          ));
+      conv.close(new SimpleResponse({
+        // No speech here, because we don't want to read everything out!
+        speech: textToSpeech,
+        displayText: displayText
+      }));
 
-          if (hasScreen === true) {
-           conv.close(new BasicCard(
-             title: `Additional market information!`,
-             displayText: 'Want more info regarding top traded UIAs? Follow this link for more info!',
+      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+      if (hasScreen === true) {
+        conv.close(new BasicCard({
+         title: `Additional market information!`,
+         displayText: 'Want more info regarding top traded UIAs? Follow this link for more info!',
 
-             buttons: new Button({
-               title: 'Block explorer link',
-               url: 'http://open-explorer.io/#/markets',
-             }),
-             display: 'WHITE'
-           ))
-          }
+         buttons: new Button({
+           title: 'Block explorer link',
+           url: 'http://open-explorer.io/#/markets',
+         }),
+         display: 'WHITE'
+        }))
+      }
 
       } else {
         catch_error(app); // Something's wrong with the HUG server!
@@ -1214,7 +1234,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
     };
 
     requestLib(request_options, (err, httpResponse, body) => {
-      if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
+      if (!err && httpResponse.statusCode === 200) { // Check that the GET request didn't encounter any issues!
 
           const top_smartcoins = body;
           var inner_voice = ``;
@@ -1238,14 +1258,15 @@ if (app.isRequestFromDialogflow("key", "value")) {
           const displayText = `The top traded smartcoins on Bitshares are as follows:\n` +
                                inner_text;
 
-          conv.close(new SimpleResponse(
+          conv.close(new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech,
             displayText: displayText
-          ));
+          }));
 
+          const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
           if (hasScreen === true) {
-            conv.close(new BasicCard(
+            conv.close(new BasicCard({
               title: `Additional market information!`,
               displayText: 'Want more info regarding top traded UIAs? Follow this link for more info!',
 
@@ -1254,7 +1275,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
                 url: 'http://open-explorer.io/#/markets',
               }),
               display: 'WHITE'
-            ))
+            }))
           }
 
       } else {
@@ -1285,7 +1306,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
     };
 
     requestLib(request_options, (err, httpResponse, body) => {
-      if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
+      if (!err && httpResponse.statusCode === 200) { // Check that the GET request didn't encounter any issues!
 
           const top_markets = body;
           var inner_voice = ``;
@@ -1311,14 +1332,15 @@ if (app.isRequestFromDialogflow("key", "value")) {
           const displayText = `The top markets on Bitshares are as follows:\n` +
                                inner_text;
 
-          conv.close(new SimpleResponse(
+          conv.close(new SimpleResponse({
            // No speech here, because we don't want to read everything out!
            speech: textToSpeech,
            displayText: displayText
-          ));
+         }));
 
+         const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
           if (hasScreen === true) {
-           conv.close(new BasicCard(
+           conv.close(new BasicCard({
              title: `Additional market information!`,
              displayText: 'Want more info regarding top traded UIAs? Follow this link for more info!',
 
@@ -1327,7 +1349,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
                url: 'http://open-explorer.io/#/markets',
              }),
              display: 'WHITE'
-           ))
+           }))
           }
 
       } else {
@@ -1361,7 +1383,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
     };
 
     requestLib(request_options, (err, httpResponse, body) => {
-      if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
+      if (!err && httpResponse.statusCode === 200) { // Check that the GET request didn't encounter any issues!
         if (body.valid_market === true && body.valid_key === true) {
 
           const market_volume_24hr = body.market_volume_24hr;
@@ -1377,14 +1399,15 @@ if (app.isRequestFromDialogflow("key", "value")) {
 
           const displayText = `${base_asset_amount} ${base_asset} were traded for ${quote_asset_amount} ${quote_asset} at an average rate of ${rate} ${trading_pair} within the last 24 hours.`;
 
-          conv.close(new SimpleResponse(
+          conv.close(new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech,
             displayText: displayText
-          ));
+          }));
 
+          const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
           if (hasScreen === true) {
-            conv.close(new BasicCard(
+            conv.close(new BasicCard({
               title: `Additional market information!`,
               displayText: 'Want more info regarding top traded UIAs? Follow this link for more info!',
 
@@ -1393,7 +1416,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
                 url: 'http://open-explorer.io/#/markets',
               }),
               display: 'WHITE'
-            ))
+            }))
           }
 
         } else {
@@ -1431,7 +1454,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
     };
 
     requestLib(request_options, (err, httpResponse, body) => {
-      if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
+      if (!err && httpResponse.statusCode === 200) { // Check that the GET request didn't encounter any issues!
         if (body.valid_market === true && body.valid_key === true) {
 
           var base_asset = input_market_pair.split("")[0];
@@ -1472,7 +1495,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
 
           const sell_voice = `<speak>` +
                               `Sell orders:` +
-                              `${sell_voice_inner}`+ +
+                              `${sell_voice_inner}`+
                               `</speak>`;
 
           const buy_voice = `<speak>` +
@@ -1480,20 +1503,21 @@ if (app.isRequestFromDialogflow("key", "value")) {
                               `${buy_voice_inner}`+
                               `</speak>`;
 
-          conv.close(new SimpleResponse(
+          conv.close(new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech1,
             displayText: displayText1
-          ));
+          }));
 
-          conv.close(new SimpleResponse(
+          conv.close(new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech2,
             displayText: displayText2
-          ));
+          }));
 
+          const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
           if (hasScreen === true) {
-            conv.close(new BasicCard(
+            conv.close(new BasicCard({
               title: `Additional market open order information available!`,
               displayText: 'Desire additional open order information? Follow this link for more info!!',
               buttons: new Button({
@@ -1501,7 +1525,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
                 url: `http://open-explorer.io/#/markets/${quote_asset}/${base_asset}`,
               }),
               display: 'WHITE'
-            ))
+            }))
           }
 
         } else {
@@ -1538,7 +1562,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
     };
 
     requestLib(request_options, (err, httpResponse, body) => {
-      if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
+      if (!err && httpResponse.statusCode === 200) { // Check that the GET request didn't encounter any issues!
         if (body.valid_market === true && body.valid_key === true) {
 
           const market_ticker = body.market_ticker;
@@ -1609,17 +1633,18 @@ if (app.isRequestFromDialogflow("key", "value")) {
                                 `Price: ${l_price}\n` +
                                 `Percentage change: ${percentChange}`;
 
-          conv.close(new SimpleResponse(
+          conv.close(new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech,
             displayText: displayText
-          ));
+          }));
 
+          const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
           if (hasScreen === true) {
             var base_asset = input_market_pair.split("")[0];
             var quote_asset = input_market_pair.split("")[1];
 
-            conv.close(new BasicCard(
+            conv.close(new BasicCard({
               title: `Additional market open order information available!`,
               displayText: 'Desire additional open order information? Follow this link for more info!!',
               buttons: new Button({
@@ -1627,7 +1652,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
                 url: `http://open-explorer.io/#/markets/${quote_asset}/${base_asset}`,
               }),
               display: 'WHITE'
-            ))
+            }))
           }
 
         } else {
@@ -1664,7 +1689,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
     };
 
     requestLib(request_options, (err, httpResponse, body) => {
-      if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
+      if (!err && httpResponse.statusCode === 200) { // Check that the GET request didn't encounter any issues!
         if (body.valid_market === true && body.valid_key === true) {
 
           const market_trade_history = body.market_trade_history;
@@ -1706,23 +1731,21 @@ if (app.isRequestFromDialogflow("key", "value")) {
           const displayText2 = `Last 10 market trades:\n` +
           `${trade_text}`;
 
-          conv.close(new SimpleResponse(
+          conv.close(new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech1,
             displayText: displayText1
-          ));
+          }));
 
-          conv.close(new SimpleResponse(
+          conv.close(new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: '',
             displayText: displayText2
-          ));
+          }));
 
+          const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
           if (hasScreen === true) {
-            var base_asset = input_market_pair.split("")[0];
-            var quote_asset = input_market_pair.split("")[1];
-
-            conv.close(new BasicCard(
+            conv.close(new BasicCard({
               title: `Additional market open order information available!`,
               displayText: 'Desire additional open order information? Follow this link for more info!!',
               buttons: new Button({
@@ -1730,7 +1753,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
                 url: `http://open-explorer.io/#/markets/${quote_asset}/${base_asset}`,
               }),
               display: 'WHITE'
-            ))
+            }))
           }
 
         } else {
@@ -1759,14 +1782,15 @@ if (app.isRequestFromDialogflow("key", "value")) {
 
     const displayText = `Do you want information regarding an individual witness, or a summary of all active witnesses?`;
 
-    conv.ask(new SimpleResponse(
+    conv.ask(new SimpleResponse({
       // Sending the details to the user
       speech: textToSpeech,
       displayText: displayText
-    ));
+    }));
 
+    const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
     if (hasScreen === true) {
-      conv.ask(new Suggestions('Active witness summary', 'Help', 'Quit'))
+      conv.ask(new Suggestions('Active witness summary', 'Help', 'Quit'));
     }
   })
 
@@ -1793,7 +1817,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
     };
 
     requestLib(request_options, (err, httpResponse, body) => {
-      if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
+      if (!err && httpResponse.statusCode === 200) { // Check that the GET request didn't encounter any issues!
         if (body.success === true && body.valid_key === true) {
 
           const witnesses = body.witnesses;
@@ -1802,7 +1826,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
           var inner_voice1 = ``;
 
           for (witness in witnesses) {
-            if witness['witness_status'] === true {
+            if (witness['witness_status'] === true) {
               // Active witness!
               const account_data = witness['witness_account_Data'];
               const role_data = witness['witness_role_data'];
@@ -1834,8 +1858,6 @@ if (app.isRequestFromDialogflow("key", "value")) {
             }
           }
 
-
-
           const textToSpeech1 = `<speak>` +
             `The following is a list of the ${num_active_witnesses} active witnesses:` +
             inner_voice1 +
@@ -1844,11 +1866,11 @@ if (app.isRequestFromDialogflow("key", "value")) {
           const displayText1 = `The following is a list of the ${num_active_witnesses} active witnesses:` +
                                inner_text1;
 
-           conv.close(new SimpleResponse(
+           conv.close(new SimpleResponse({
              // No speech here, because we don't want to read everything out!
              speech: textToSpeech1,
              displayText: displayText1
-           ));
+           }));
 
           var textToSpeech2 = ``;
           var displayText2 = ``;
@@ -1860,15 +1882,16 @@ if (app.isRequestFromDialogflow("key", "value")) {
 
             displayText2 = inner_text2;
 
-            conv.close(new SimpleResponse(
+            conv.close(new SimpleResponse({
               // No speech here, because we don't want to read everything out!
               speech: textToSpeech2,
               displayText: displayText2
-            ));
+            }));
           }
 
+          const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
           if (hasScreen === true) {
-            conv.close(new BasicCard(
+            conv.close(new BasicCard({
               title: `Additional witness information available!`,
               displayText: 'Desire additional witness information? Follow this link for more info!',
               buttons: new Button({
@@ -1876,7 +1899,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
                 url: `http://open-explorer.io/#/witness`,
               }),
               display: 'WHITE'
-            ))
+            }))
           }
         } else {
           catch_error(app); // Something's wrong with the HUG server!
@@ -1912,7 +1935,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
     };
 
     requestLib(request_options, (err, httpResponse, body) => {
-      if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
+      if (!err && httpResponse.statusCode === 200) { // Check that the GET request didn't encounter any issues!
         if (body.valid_witness === true && body.valid_key === true) {
 
           const witness_role_data = body.witness_role_data;
@@ -1955,22 +1978,23 @@ if (app.isRequestFromDialogflow("key", "value")) {
             displayText1 += `URL: ${url}`;
           }
 
-          conv.close(new SimpleResponse(
+          conv.close(new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech1,
             displayText: displayText1
-          ));
+          }));
 
+          const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
           if (hasScreen === true) {
-            conv.close(new BasicCard(
+            conv.close(new BasicCard({
               title: `Additional account information available!`,
-              displayText: 'Desire additional account information about ${witness_name}? Follow this link for more info!',
+              displayText: `Desire additional account information about ${witness_name}? Follow this link for more info!`,
               buttons: new Button({
                 title: 'Block explorer link',
-                url: `http://open-explorer.io/#/accounts/${witness_name}`,
+                url: `http://open-explorer.io/#/accounts/${witness_name}`
               }),
               display: 'WHITE'
-            ))
+            }))
           }
         } else {
           catch_error(app); // Something's wrong with the HUG server!
@@ -1998,14 +2022,15 @@ if (app.isRequestFromDialogflow("key", "value")) {
 
     const displayText = `Do you want information regarding an individual worker proposal, or a summary of all active worker proposals?`;
 
-    conv.ask(new SimpleResponse(
+    conv.ask(new SimpleResponse({
       // Sending the details to the user
       speech: textToSpeech,
       displayText: displayText
-    ));
+    }));
 
+    const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
     if (hasScreen === true) {
-      conv.ask(new Suggestions('Active worker proposals', 'Help', 'Quit'))
+      conv.ask(new Suggestions('Active worker proposals', 'Help', 'Quit'));
     }
   })
 
@@ -2033,7 +2058,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
     };
 
     requestLib(request_options, (err, httpResponse, body) => {
-      if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
+      if (!err && httpResponse.statusCode === 200) { // Check that the GET request didn't encounter any issues!
         if (body.success === true && body.valid_key === true) {
 
           var workers = body.workers;
@@ -2078,11 +2103,11 @@ if (app.isRequestFromDialogflow("key", "value")) {
                                 `</speak>`;
           const displayText1 = text1;
 
-          conv.close(new SimpleResponse(
+          conv.close(new SimpleResponse({
             // Sending the details to the user
             speech: textToSpeech1,
             displayText: displayText1
-          ));
+          }));
 
           if (text2.length() > 1) {
             const textToSpeech2 = `<speak>` +
@@ -2090,15 +2115,16 @@ if (app.isRequestFromDialogflow("key", "value")) {
                                   `</speak>`;
             const displayText2 = text2;
 
-            conv.close(new SimpleResponse(
+            conv.close(new SimpleResponse({
               // Sending the details to the user
               speech: textToSpeech2,
               displayText: displayText2
-            ));
+            }));
           }
 
+          const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
           if (hasScreen === true) {
-            conv.close(new BasicCard(
+            conv.close(new BasicCard({
               title: `Additional worker proposal information is available!`,
               displayText: 'Desire additional worker proposal information? Follow this link for more info!',
               buttons: new Button({
@@ -2106,7 +2132,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
                 url: `http://open-explorer.io/#/workers`,
               }),
               display: 'WHITE'
-            ))
+            }))
           }
 
         } else {
@@ -2144,7 +2170,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
     };
 
     requestLib(request_options, (err, httpResponse, body) => {
-      if (!err && httpResponse.statusCode == 200) { // Check that the GET request didn't encounter any issues!
+      if (!err && httpResponse.statusCode === 200) { // Check that the GET request didn't encounter any issues!
         if (body.valid_worker === true && body.valid_key === true) {
 
           const worker = body.worker;
@@ -2175,14 +2201,15 @@ if (app.isRequestFromDialogflow("key", "value")) {
                                 `Total votes: ${total_votes}.` +
                                 `URL: ${url}`;
 
-          conv.close(new SimpleResponse(
+          conv.close(new SimpleResponse({
             // Sending the details to the user
             speech: textToSpeech1,
             displayText: displayText1
-          ));
+          }));
 
+          const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
           if (hasScreen === true) {
-            conv.close(new BasicCard(
+            conv.close(new BasicCard({
               title: `Additional worker proposal information is available!`,
               displayText: 'Desire additional worker proposal information? Follow this link for more info!',
               buttons: new Button({
@@ -2190,7 +2217,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
                 url: `http://open-explorer.io/#/objects/${worker_id}`,
               }),
               display: 'WHITE'
-            ))
+            }))
           }
 
         } else {
@@ -2227,14 +2254,15 @@ if (app.isRequestFromDialogflow("key", "value")) {
       console.log("HANDLED FALLBACK!");
       let current_fallback_phrase = MENU_FALLBACK[app.data.fallbackCount];
 
-      conv.ask(new SimpleResponse(
+      conv.ask(new SimpleResponse({
         // Sending the details to the user
         speech: current_fallback_phrase,
         displayText: current_fallback_phrase
-      ));
+      }));
 
+      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
       if (hasScreen === true) {
-        conv.ask(new Suggestions('Help', 'Quit'))
+        conv.ask(new Suggestions('Help', 'Quit'));
       }
     }
   })
@@ -2249,8 +2277,6 @@ if (app.isRequestFromDialogflow("key", "value")) {
     const help_anywhere_parameter = {}; // The dict which will hold our parameter data
     help_anywhere_parameter['placeholder'] = 'placeholder'; // We need this placeholder
     app.setContext('help_anywhere', 1, help_anywhere_parameter); // We need to insert data into the 'home' context for the home fallback to trigger!
-
-    let helpCard = app.buildRichResponse();
 
     const textToSpeech = `<speak>` +
       `I heard you're having some problems with Beyond Bitshares? <break time="0.35s" /> ` +
@@ -2276,20 +2302,21 @@ if (app.isRequestFromDialogflow("key", "value")) {
       `You can blahblah.` +
       `You can blahblah.`;
 
-    conv.ask(new SimpleResponse(
+    conv.ask(new SimpleResponse({
       // Sending the details to the user
       speech: textToSpeech,
       displayText: textToDisplay
-    ));
+    }));
 
-    conv.ask(new SimpleResponse(
+    conv.ask(new SimpleResponse({
       // Sending the details to the user
       speech: textToSpeech2,
       displayText: textToDisplay
-    ));
+    }));
 
+    const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
     if (hasScreen === true) {
-      conv.ask(new BasicCard(
+      conv.ask(new BasicCard({
         title: `Template`,
         displayText: 'Text to display in basic card.',
         buttons: new Button({
@@ -2297,7 +2324,7 @@ if (app.isRequestFromDialogflow("key", "value")) {
           url: `http://open-explorer.io`,
         }),
         display: 'WHITE'
-      ));
+      }));
       conv.ask(new Suggestions('Help', 'Quit'));
     }
   })
@@ -2326,14 +2353,15 @@ if (app.isRequestFromDialogflow("key", "value")) {
       console.log("HANDLED FALLBACK!");
       let current_fallback_phrase = MENU_FALLBACK[app.data.fallbackCount];
 
-      conv.ask(new SimpleResponse(
+      conv.ask(new SimpleResponse({
         // Sending the details to the user
         speech: current_fallback_phrase,
         displayText: current_fallback_phrase
-      ));
+      }));
 
+      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
       if (hasScreen === true) {
-        conv.ask(new Suggestions('Help', 'Quit'))
+        conv.ask(new Suggestions('Help', 'Quit'));
       }
     }
   })
@@ -2349,19 +2377,12 @@ if (app.isRequestFromDialogflow("key", "value")) {
     speechToText = `Sorry to see you go, come back soon? \n\n` +
       `Goodbye.`;
 
-    conv.close(new SimpleResponse(
+    conv.close(new SimpleResponse({
       // Sending the details to the user
       speech: textToSpeech,
       displayText: displayText
-    ));
+    }));
   })
-
-  function catch_error(app) {
-    /*
-    Generally used when there's a small illogical error.
-    */
-    conv.close("An unexpected error was encountered! Let's end our Vote Goat session for now.");
-  }
 
   app.catch((conv, e) => {
     /*
@@ -2372,12 +2393,12 @@ if (app.isRequestFromDialogflow("key", "value")) {
     conv.close(responses.readMindError)
   })
 
-} else {
-  /*
-  The request was not from Dialogflow, this could be an attempted attack!
-  */
-  console.log("WARNING: FIREBASE REQUREST NOT FROM VALID SOURCE!"); // Next level would be to trigger a warning or log the infraction in mongodb.
-  response.status(400).send(); // Take this, attacker!
-}
+//} else {
+//  /*
+//  The request was not from Dialogflow, this could be an attempted attack!
+//  */
+//  console.log("WARNING: FIREBASE REQUREST NOT FROM VALID SOURCE!"); // Next level would be to trigger a warning or log the infraction in mongodb.
+//  response.status(400).send(); // Take this, attacker!
+//}
 
 exports.BeyondBitshares = functions.https.onRequest(app)
