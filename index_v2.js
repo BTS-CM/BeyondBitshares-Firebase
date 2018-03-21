@@ -14,8 +14,8 @@ const http = require('https'); // Required for request's https use? Or dead code
 const requestLib = require('request'); // Used for querying the HUG.REST API
 const moment = require('moment'); // For handling time.
 
-const hug_host = 'https://btsapi.grcnode.co.uk'; // Change this to your own HUG REST API server (if you want)
 const app = dialogflow({ debug: true }) // Creating the primary dialogflow app element
+const hug_host = 'https://btsapi.grcnode.co.uk'; // Change this to your own HUG REST API server (if you want)
 
 function catch_error(app) {
   /*
@@ -24,7 +24,7 @@ function catch_error(app) {
   conv.close(new SimpleResponse({
     // Sending the details to the user
     speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
-    displayText: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+    text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
   }));
 }
 
@@ -46,11 +46,11 @@ function catch_error(app) {
     /*
     The default welcome intent
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const welcome_param = {}; // The dict which will hold our parameter data
     welcome_param['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('home', 1, welcome_param); // We need to insert data into the 'home' context for the home fallback to trigger!
+    conv.contexts.set('home', 1, welcome_param); // We need to insert data into the 'home' context for the home fallback to trigger!
 
     const textToSpeech = `<speak>` +
       `<emphasis level="moderate">Hey, welcome to Beyond Bitshares!</emphasis> <break time="0.375s" /> ` +
@@ -66,7 +66,7 @@ function catch_error(app) {
 
     conv.ask(new SimpleResponse({
       speech: textToSpeech,
-      displayText: textToDisplay
+      text: textToDisplay
     }));
 
     const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
@@ -79,29 +79,25 @@ function catch_error(app) {
     /*
       About function - providing info about Bitshares.
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const about_param = {}; // The dict which will hold our parameter data
     about_param['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('about', 1, about_param); // Need to set the data
+    conv.contexts.set('about', 1, about_param); // Need to set the data
 
-    const textToSpeech1 = `<speak>` +
-      `The BitShares platform has numerous innovative features which are not found elsewhere within the smart contract industry such as:` +
+    const textToSpeech1 = `The BitShares platform has numerous innovative features which are not found elsewhere within the smart contract industry such as:` +
     `Price-Stable Cryptocurrencies - SmartCoins provide the freedom of cryptocurrency with the stability of FIAT assets.` +
     `Decentralized Asset Exchange - A fast and fluid trading platform` +
     `Industrial Performance and Scalability - Proven 3k TPS, theoretical 100k limit.` +
     `Dynamic Account Permissions - Management for the corporate environment.` +
-    `Recurring & Scheduled Payments - Flexible withdrawal permissions.` +
-    `</speak>`;
+    `Recurring & Scheduled Payments - Flexible withdrawal permissions.`;
 
-    const textToSpeech2 = `<speak>` +
-      `Referral Rewards Program - Network growth through adoption rewards.` +
+    const textToSpeech2 = `Referral Rewards Program - Network growth through adoption rewards.` +
       `User-Issued Assets - Regulation-compatible cryptoasset issuance.` +
       `Stakeholder-Approved Project Funding - A self-sustaining funding model.` +
       `Transferable Named Accounts - Easy and secure transactions.` +
       `Delegated Proof-of-Stake Consensus - A robust and flexible consensus protocol.` +
-      `Want to know more about any of Bitshares features?` +
-    `</speak>`;
+      `Want to know more about any of Bitshares features?`;
 
     const displayText1 = `The BitShares platform has numerous innovative features which are not found elsewhere within the smart contract industry such as: \n\n` +
     `Price-Stable Cryptocurrencies - SmartCoins provide the freedom of cryptocurrency with the stability of FIAT assets.\n\n` +
@@ -119,12 +115,12 @@ function catch_error(app) {
 
     conv.ask(new SimpleResponse({
       speech: textToSpeech1,
-      displayText: displayText1
+      text: displayText1
     }));
 
     conv.ask(new SimpleResponse({
       speech: textToSpeech2,
-      displayText: displayText2
+      text: displayText2
     }));
 
     const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
@@ -137,11 +133,11 @@ function catch_error(app) {
     /*
       account function
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const parameter = {}; // The dict which will hold our parameter data
     parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('account', 1, parameter); // Need to set the data
+    conv.contexts.set('account', 1, parameter); // Need to set the data
 
     const textToSpeech1 = `<speak>` +
       `Available Bitshares account information:` +
@@ -169,12 +165,12 @@ function catch_error(app) {
 
     conv.ask(new SimpleResponse({
       speech: textToSpeech1,
-      displayText: displayText1
+      text: displayText1
     }));
 
     conv.ask(new SimpleResponse({
       speech: textToSpeech2,
-      displayText: displayText2
+      text: displayText2
     }));
 
     const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
@@ -187,11 +183,11 @@ function catch_error(app) {
     /*
       account_Balances function
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const parameter = {}; // The dict which will hold our parameter data
     parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('account_Balances', 1, parameter); // Need to set the data
+    conv.contexts.set('account_Balances', 1, parameter); // Need to set the data
 
     // input_account = <Retrieve Account from DialogFlow)
     var input_account = 'abit'; // For testing!
@@ -255,7 +251,7 @@ function catch_error(app) {
 
           conv.ask(new SimpleResponse({
             speech: textToSpeech,
-            displayText: displayText
+            text: displayText
           }));
 
           const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
@@ -263,7 +259,7 @@ function catch_error(app) {
             if (many_balances === true) {
               conv.ask(new BasicCard({
                 title: `Insufficient space to display ${input_account}'s balances!'`,
-                displayText: 'This account has too many balances to show. Please navigate to the linked block explorer.',
+                text: 'This account has too many balances to show. Please navigate to the linked block explorer.',
 
                 buttons: new Button({
                   title: 'Block explorer link',
@@ -274,10 +270,18 @@ function catch_error(app) {
             }
           }
         } else {
-          catch_error(app); // Something's wrong with the HUG server!
+          conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
         }
       } else {
-        catch_error(app); // Something's wrong with the HUG server!
+        conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
       }
     })
   })
@@ -286,11 +290,11 @@ function catch_error(app) {
     /*
       account_CallPositions function
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const parameter = {}; // The dict which will hold our parameter data
     parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('account_CallPositions', 1, parameter); // Need to set the data
+    conv.contexts.set('account_CallPositions', 1, parameter); // Need to set the data
 
     // input_account = <Retrieve Account from DialogFlow>
 
@@ -361,13 +365,21 @@ function catch_error(app) {
           conv.close(new SimpleResponse({
            // Sending the details to the user & closing app.
            speech: textToSpeech,
-           displayText: displayText
+           text: displayText
          }))
         } else {
-          catch_error(app); // Something's wrong with the HUG server!
+          conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
         }
       } else {
-        catch_error(app); // Something's wrong with the HUG server!
+        conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
       }
     })
   })
@@ -376,11 +388,11 @@ function catch_error(app) {
     /*
       account_Info function
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const parameter = {}; // The dict which will hold our parameter data
     parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('account_Info', 1, parameter); // Need to set the data
+    conv.contexts.set('account_Info', 1, parameter); // Need to set the data
 
     const request_options = {
       url: `${hug_host}/account_info`,
@@ -418,14 +430,22 @@ function catch_error(app) {
           conv.close(new SimpleResponse({
            // Sending the details to the user & closing app.
            speech: textToSpeech,
-           displayText: displayText
+           text: displayText
          }))
 
         } else {
-          catch_error(app); // Something's wrong with the HUG server!
+          conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
         }
       } else {
-        catch_error(app); // Something's wrong with the HUG server!
+        conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
       }
     })
   })
@@ -434,11 +454,11 @@ function catch_error(app) {
     /*
       asset function
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const parameter = {}; // The dict which will hold our parameter data
     parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('asset', 1, parameter); // Need to set the data
+    conv.contexts.set('asset', 1, parameter); // Need to set the data
 
     const textToSpeech = `<speak>` +
       `You can request the following Asset information:` +
@@ -457,7 +477,7 @@ function catch_error(app) {
     conv.ask(new SimpleResponse({
       // Sending the details to the user
       speech: textToSpeech,
-      displayText: displayText
+      text: displayText
     }));
 
     const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
@@ -470,11 +490,11 @@ function catch_error(app) {
     /*
       get_Asset function
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const parameter = {}; // The dict which will hold our parameter data
     parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('get_Asset', 1, parameter); // Need to set the data
+    conv.contexts.set('get_Asset', 1, parameter); // Need to set the data
 
     const request_options = {
       url: `${hug_host}/get_asset`,
@@ -519,13 +539,21 @@ function catch_error(app) {
           conv.close(new SimpleResponse({
             // Sending the details to the user & closing app.
             speech: textToSpeech,
-            displayText: displayText
+            text: displayText
           }))
         } else {
-          catch_error(app); // Something's wrong with the HUG server!
+          conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
         }
       } else {
-        catch_error(app); // Something's wrong with the HUG server!
+        conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
       }
     })
   })
@@ -534,11 +562,11 @@ function catch_error(app) {
     /*
       block function
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const parameter = {}; // The dict which will hold our parameter data
     parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('block', 1, parameter); // Need to set the data
+    conv.contexts.set('block', 1, parameter); // Need to set the data
 
     const textToSpeech = `<speak>` +
       `What kind of block information do you seek?` +
@@ -555,7 +583,7 @@ function catch_error(app) {
     conv.ask(new SimpleResponse({
       // Sending the details to the user
       speech: textToSpeech,
-      displayText: displayText
+      text: displayText
     }));
 
     const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
@@ -568,11 +596,11 @@ function catch_error(app) {
     /*
       block_Latest function
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const parameter = {}; // The dict which will hold our parameter data
     parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('block_Latest', 1, parameter); // Need to set the data
+    conv.contexts.set('block_Latest', 1, parameter); // Need to set the data
     const request_options = {
       url: `${hug_host}/get_latest_block`,
       method: 'GET', // GET request, not POST.
@@ -612,7 +640,7 @@ function catch_error(app) {
           conv.close(new SimpleResponse({
             // Sending the details to the user
             speech: textToSpeech,
-            displayText: displayText
+            text: displayText
           }))
 
           const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
@@ -620,7 +648,7 @@ function catch_error(app) {
 
             conv.close(new BasicCard({
               title: `More block info available!'`,
-              displayText: 'Interested in more block information?',
+              text: 'Interested in more block information?',
               buttons: new Button({
                 title: 'Block explorer link',
                 url: `http://open-explorer.io/#/search`,
@@ -632,10 +660,18 @@ function catch_error(app) {
         } else {
           // WRONG Block number.
           // TODO: SEND TO FALLBACK!
-          catch_error(app); // Something's wrong with the HUG server!
+          conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
         }
       } else {
-        catch_error(app); // Something's wrong with the HUG server!
+        conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
       }
     })
   })
@@ -644,11 +680,11 @@ function catch_error(app) {
     /*
       get_block_details function
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const parameter = {}; // The dict which will hold our parameter data
     parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('get_block_details', 1, parameter); // Need to set the data
+    conv.contexts.set('get_block_details', 1, parameter); // Need to set the data
     const request_options = {
       url: `${hug_host}/get_block_details`,
       method: 'GET', // GET request, not POST.
@@ -688,12 +724,12 @@ function catch_error(app) {
           conv.close(new SimpleResponse({
             // Sending the details to the user
             speech: textToSpeech,
-            displayText: displayText
+            text: displayText
           }))
 
           conv.close(new BasicCard({
             title: `More block info available!'`,
-            displayText: 'Interested in more block information?',
+            text: 'Interested in more block information?',
             buttons: new Button({
               title: 'Block explorer link',
               url: `http://open-explorer.io/#/blocks/${block_number}`,
@@ -701,10 +737,18 @@ function catch_error(app) {
             display: 'WHITE'
           }))
         } else {
-          catch_error(app); // Something's wrong with the HUG server!
+          conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
         }
       } else {
-        catch_error(app); // Something's wrong with the HUG server!
+        conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
       }
     })
   })
@@ -713,11 +757,11 @@ function catch_error(app) {
     /*
       blockchain_Overview function
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const parameter = {}; // The dict which will hold our parameter data
     parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('blockchain_Overview', 1, parameter); // Need to set the data
+    conv.contexts.set('blockchain_Overview', 1, parameter); // Need to set the data
 
     const request_options = {
       url: `${hug_host}/chain_info`,
@@ -763,15 +807,23 @@ function catch_error(app) {
           conv.close(new SimpleResponse({
             // Sending the details to the user
             speech: textToSpeech,
-            displayText: displayText
+            text: displayText
           }))
 
         } else {
-          catch_error(app); // Something's wrong with the HUG server!
+          conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
           // TODO: REPLACE WITH FALLBACK!!
         }
       } else {
-        catch_error(app); // Something's wrong with the HUG server!
+        conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
       }
     })
   })
@@ -780,11 +832,11 @@ function catch_error(app) {
     /*
       committee function
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const parameter = {}; // The dict which will hold our parameter data
     parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('committee', 1, parameter); // Need to set the data
+    conv.contexts.set('committee', 1, parameter); // Need to set the data
 
     const textToSpeech = `<speak>` +
       `Do you want to look up the active committee members, or a single committee member?` +
@@ -797,7 +849,7 @@ function catch_error(app) {
     conv.ask(new SimpleResponse({
       // Sending the details to the user
       speech: textToSpeech,
-      displayText: displayText
+      text: displayText
     }));
 
     const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
@@ -811,11 +863,11 @@ function catch_error(app) {
     /*
       committee_Active function
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const parameter = {}; // The dict which will hold our parameter data
     parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('committee_Active', 1, parameter); // Need to set the data
+    conv.contexts.set('committee_Active', 1, parameter); // Need to set the data
 
     const request_options = {
       url: `${hug_host}/get_committee_members`,
@@ -867,7 +919,7 @@ function catch_error(app) {
           conv.close(new SimpleResponse({
             // Sending the details to the user
             speech: textToSpeech,
-            displayText: displayText
+            text: displayText
           }))
 
           const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
@@ -875,7 +927,7 @@ function catch_error(app) {
             if (more_than_640 === true) {
               conv.close(new BasicCard({
                 title: `Insufficient space to display committee members!`,
-                displayText: 'There are more Committee member to display! Please navigate to the linked block explorer.',
+                text: 'There are more Committee member to display! Please navigate to the linked block explorer.',
 
                 buttons: new Button({
                   title: 'Committee info',
@@ -886,11 +938,19 @@ function catch_error(app) {
             }
           }
         } else {
-          catch_error(app); // Something's wrong with the HUG server!
+          conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
           // TODO: REPLACE WITH FALLBACK!!
         }
       } else {
-        catch_error(app); // Something's wrong with the HUG server!
+        conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
       }
     })
   })
@@ -899,11 +959,11 @@ function catch_error(app) {
     /*
       get_committee_member function
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const parameter = {}; // The dict which will hold our parameter data
     parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('get_committee_member', 1, parameter); // Need to set the data
+    conv.contexts.set('get_committee_member', 1, parameter); // Need to set the data
 
     const request_options = {
       url: `${hug_host}/get_committee_member`,
@@ -955,15 +1015,23 @@ function catch_error(app) {
           conv.close(new SimpleResponse({
             // Sending the details to the user
             speech: textToSpeech,
-            displayText: displayText
+            text: displayText
           }));
 
         } else {
-          catch_error(app); // Something's wrong with the HUG server!
+          conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
           // TODO: REPLACE WITH FALLBACK!!
         }
       } else {
-        catch_error(app); // Something's wrong with the HUG server!
+        conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
       }
     })
   })
@@ -972,11 +1040,11 @@ function catch_error(app) {
     /*
       fees function
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    //conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
-    const parameter = {}; // The dict which will hold our parameter data
-    parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('fees', 1, parameter); // Need to set the data
+    //const parameter = {}; // The dict which will hold our parameter data
+    //parameter['placeholder'] = 'placeholder'; // We need this placeholder
+    //conv.contexts.set('fees', 1, parameter); // Need to set the data
 
     const request_options = {
       url: `${hug_host}/list_fees`,
@@ -990,117 +1058,157 @@ function catch_error(app) {
         api_key: '123abc'
       }
     };
+    
+    console.log("A");
 
-    requestLib(request_options, (err, httpResponse, body) => {
-      if (!err && httpResponse.statusCode === 200) { // Check that the GET request didn't encounter any issues!
-        if (body.success === true && body.valid_key === true) {
 
-          fees = body.network_fees;
+    try {
+      requestLib(request_options, (err, httpResponse, body) => {
+        console.log("AA");
+        if (!err && httpResponse.statusCode === 200) { // Check that the GET request didn't encounter any issues!
+          console.log("AAA");
+          console.log(body);
+          if (body.valid_key === true) {
+            console.log("B");
+            //fees = body.network_fees;
 
-          const textToSpeech1 = `<speak>` +
-            `The most important Bitshares network fees are:` +
-            `Asset transfer: ${fees['transfer']['fee']}` +
-            `Limit order create: ${fees['limit_order_create']['fee']}` +
-            `Account creation: Between ${fees['account_create']['basic_fee']} and ${fees['account_create']['premium_fee']}` +
-            `Lifetime Membership Upgrade: ${fees['account_upgrade']['membership_lifetime_fee']}` +
-            `Asset creation: ${fees['asset_create']['long_symbol']} to ${fees['asset_create']['symbol3']}` +
-            `Asset issuance: ${fees['asset_issue']['fee']}` +
-            `Worker proposal creation ${fees['worker_create']['fee']}` +
-            `</speak>`;
+            const textToSpeech1 = `<speak>` +
+              `The most important Bitshares network fees are:` +
+              `Asset transfer: ${body.network_fees.transfer.fee}` +
+              `Limit order create: ${body.network_fees.limit_order_create.fee}` +
+              `Account creation: Between ${body.network_fees.account_create.basic_fee} and ${body.network_fees.account_create.premium_fee}` +
+              `Lifetime Membership Upgrade: ${body.network_fees.account_upgrade.membership_lifetime_fee}` +
+              `Asset creation: ${body.network_fees.asset_create.long_symbol} to ${body.network_fees.asset_create.symbol3}` +
+              `Asset issuance: ${body.network_fees.asset_issue.fee}` +
+              `Worker proposal creation ${body.network_fees.worker_create.fee}` +
+              `</speak>`;
 
-          const displayText1 =  `Market fees:\n` +
-                                `Asset transfer: ${fees['transfer']['fee']}\n` +
-                                `Limit order create: ${fees['limit_order_create']['fee']}\n` +
-                                `Limit order cancel: ${fees['limit_order_cancel']['fee']}\n` +
-                                `Call order update: ${fees['call_order_update']['fee']}\n\n` +
-                                `Account fees:\n` +
-                                `Create: ${fees['account_create']['basic_fee']} to ${fees['account_create']['premium_fee']}\n` +
-                                `Update: ${fees['account_update']['fee']}\n` +
-                                `Whitelist: ${fees['account_whitelist']['fee']}\n` +
-                                `LTM Upgrade: ${fees['account_upgrade']['membership_lifetime_fee']}` +
-                                `Transfer: ${fees['account_transfer']['fee']}\n\n` +
-                                `Asset fees:\n` +
-                                `Create: ${fees['asset_create']['long_symbol']} to ${fees['asset_create']['symbol3']}\n` +
-                                `Update: ${fees['account_update']['fee']}\n` +
-                                `Update bitasset: ${fees['asset_update_bitasset']['fee']}\n` +
-                                `Update feed producers: ${fees['asset_update_feed_producers']['fee']}\n` +
-                                `Issue: ${fees['asset_issue']['fee']}\n` +
-                                `Reserve: ${fees['asset_reserve']['fee']}\n` +
-                                `Fund fee pool: ${fees['asset_fund_fee_pool']['fee']}\n` +
-                                `Settle: ${fees['asset_settle']['fee']}\n` +
-                                `Global settle: ${fees['asset_global_settle']['fee']}\n` +
-                                `Publish feed: ${fees['asset_publish_feed']['fee']}\n\n` +
-                                `Witness fees:\n` +
-                                `Create: ${fees['witness_create']['fee']}\n` +
-                                `Update: ${fees['witness_update']['fee']}`;
+            console.log("BB");
 
-          const displayText2 = `Proposal fees:\n` +
-                                `Create: ${fees['proposal_create']['fee']}\n` +
-                                `Update: ${fees['proposal_update']['fee']}\n` +
-                                `Delete: ${fees['proposal_delete']['fee']}\n\n` +
-                                `Withdraw permission fees:\n` +
-                                `Create: ${fees['withdraw_permission_create']['fee']}\n` +
-                                `Update: ${fees['withdraw_permission_update']['fee']}\n` +
-                                `Claim: ${fees['withdraw_permission_claim']['fee']}\n\n` +
-                                `Committee member fees:\n` +
-                                `Create: ${fees['committee_member_create']['fee']}\n` +
-                                `Update: ${fees['committee_member_update']['fee']}\n` +
-                                `Update global parameters: ${fees['committee_member_update_global_parameters']['fee']}\n\n` +
-                                `Vesting balance fees:\n` +
-                                `Create: ${fees['vesting_balance_create']['fee']}\n` +
-                                `Withdraw: ${fees['vesting_balance_withdraw']['fee']}\n\n` +
-                                `MISC fees:\n` +
-                                `Worker create ${fees['worker_create']['fee']}\n` +
-                                `Assert: ${fees['assert']['fee']}\n` +
-                                `Override transfer: ${fees['override_transfer']['fee']}\n` +
-                                `Transfer to blind: ${fees['transfer_to_blind']['fee']}\n` +
-                                `Transfer from blind: ${fees['transfer_from_blind']['fee']}\n` +
-                                `Asset claim fees: ${fees['asset_claim_fees']['fee']}\n`;
+            const displayText1 =  `Market fees:\n` +
+                                  `Asset transfer: ${body.network_fees.transfer.fee}\n` +
+                                  `Limit order create: ${body.network_fees.limit_order_create.fee}\n` +
+                                  `Limit order cancel: ${body.network_fees.limit_order_cancel.fee}\n` +
+                                  `Call order update: ${body.network_fees.call_order_update.fee}\n\n` +
+                                  `Account fees:\n` +
+                                  `Create: ${body.network_fees.account_create.basic_fee} to ${body.network_fees.account_create.premium_fee}\n` +
+                                  `Update: ${body.network_fees.account_update.fee}\n` +
+                                  `Whitelist: ${body.network_fees.account_whitelist.fee}\n` +
+                                  `LTM Upgrade: ${body.network_fees.account_upgrade.membership_lifetime_fee}` +
+                                  `Transfer: ${body.network_fees.account_transfer.fee}\n\n` +
+                                  `Asset fees:\n` +
+                                  `Create: ${body.network_fees.asset_create.long_symbol} to ${body.network_fees.asset_create.symbol3}\n` +
+                                  `Update: ${body.network_fees.account_update.fee}\n` +
+                                  `Update bitasset: ${body.network_fees.asset_update_bitasset.fee}\n` +
+                                  `Update feed producers: ${body.network_fees.asset_update_feed_producers.fee}\n` +
+                                  `Issue: ${body.network_fees.asset_issue.fee}\n` +
+                                  `Reserve: ${body.network_fees.asset_reserve.fee}\n` +
+                                  `Fund fee pool: ${body.network_fees.asset_fund_fee_pool.fee}\n` +
+                                  `Settle: ${body.network_fees.asset_settle.fee}\n` +
+                                  `Global settle: ${body.network_fees.asset_global_settle.fee}\n` +
+                                  `Publish feed: ${body.network_fees.asset_publish_feed.fee}\n\n` +
+                                  `Witness fees:\n` +
+                                  `Create: ${body.network_fees.witness_create.fee}\n` +
+                                  `Update: ${body.network_fees.witness_update.fee}`;
+            console.log("BBB");
 
-          conv.close(new SimpleResponse({
-            // Sending the details to the user
-            speech: textToSpeech1,
-            displayText: displayText1
-          }));
+            const displayText2 = `Proposal fees:\n` +
+                                  `Create: ${body.network_fees.proposal_create.fee}\n` +
+                                  `Update: ${body.network_fees.proposal_update.fee}\n` +
+                                  `Delete: ${body.network_fees.proposal_delete.fee}\n\n` +
+                                  `Withdraw permission fees:\n` +
+                                  `Create: ${body.network_fees.withdraw_permission_create.fee}\n` +
+                                  `Update: ${body.network_fees.withdraw_permission_update.fee}\n` +
+                                  `Claim: ${body.network_fees.withdraw_permission_claim.fee}\n\n` +
+                                  `Committee member fees:\n` +
+                                  `Create: ${body.network_fees.committee_member_create.fee}\n` +
+                                  `Update: ${body.network_fees.committee_member_update.fee}\n` +
+                                  `Update global parameters: ${body.network_fees.committee_member_update_global_parameters.fee}\n\n` +
+                                  `Vesting balance fees:\n` +
+                                  `Create: ${body.network_fees.vesting_balance_create.fee}\n` +
+                                  `Withdraw: ${body.network_fees.vesting_balance_withdraw.fee}\n\n` +
+                                  `MISC fees:\n` +
+                                  `Worker create ${body.network_fees.worker_create.fee}\n` +
+                                  `Assert: ${body.network_fees.assert.fee}\n` +
+                                  `Override transfer: ${body.network_fees.override_transfer.fee}\n` +
+                                  `Transfer to blind: ${body.network_fees.transfer_to_blind.fee}\n` +
+                                  `Transfer from blind: ${body.network_fees.transfer_from_blind.fee}\n` +
+                                  `Asset claim fees: ${body.network_fees.asset_claim_fees.fee}\n`;
 
-          conv.close(new SimpleResponse({
-            // No speech here, because we don't want to read everything out!
-            speech: '',
-            displayText: displayText2
-          }));
+            console.log("BBBB");
 
-          const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
-          if (hasScreen === true) {
-            conv.close(new BasicCard({
-              title: `Additional info available regarding BTS fees!`,
-              displayText: 'Want more info on Bitshares network fees? Follow this link for more info! Remember that your elected committee members set these fees!',
+            try {
+              conv.close(new SimpleResponse({
+                // Sending the details to the user
+                speech: textToSpeech1,
+                text: displayText1
+              }))
+            } catch (err) {
+                if(err instanceof Error) {
+                    console.error(err);
+                } else {
+                    console.error(new Error(err));
+                }
+            }
 
-              buttons: new Button({
-                title: 'Block explorer link',
-                url: 'http://open-explorer.io/#/fees',
-              }),
-              display: 'WHITE'
+            console.log("BBBBB");
+
+            conv.close(new SimpleResponse({
+              // No speech here, because we don't want to read everything out!
+              speech: '',
+              text: displayText2
             }))
+            console.log("C");
+
+            const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+            if (hasScreen === true) {
+              conv.close(new BasicCard({
+                title: `Additional info available regarding BTS fees!`,
+                text: 'Want more info on Bitshares network fees? Follow this link for more info! Remember that your elected committee members set these fees!',
+
+                buttons: new Button({
+                  title: 'Block explorer link',
+                  url: 'http://open-explorer.io/#/fees',
+                }),
+                display: 'WHITE'
+              }))
+            }
+            console.log("D");
+          } else {
+            conv.close(new SimpleResponse({
+              // Sending the details to the user
+              speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+              text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+            }))
+            // TODO: REPLACE WITH FALLBACK!!
           }
         } else {
-          catch_error(app); // Something's wrong with the HUG server!
-          // TODO: REPLACE WITH FALLBACK!!
+          conv.close(new SimpleResponse({
+            // Sending the details to the user
+            speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+            text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+          }));
         }
-      } else {
-        catch_error(app); // Something's wrong with the HUG server!
-      }
-    })
+      })
+      // Call a a different service
+    } catch (err) {
+        if(err instanceof Error) {
+            console.error(err);
+        } else {
+            console.error(new Error(err));
+        }
+    }
   })
 
   app.intent('Market', (conv) => {
     /*
       market function
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const parameter = {}; // The dict which will hold our parameter data
     parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('market', 1, parameter); // Need to set the data
+    conv.contexts.set('market', 1, parameter); // Need to set the data
 
     const textToSpeech1 = `<speak>` +
       `You can request an individual trading pair's following market information:` +
@@ -1125,13 +1233,13 @@ function catch_error(app) {
     conv.ask(new SimpleResponse({
       // Sending the details to the user
       speech: textToSpeech1,
-      displayText: displayText1
+      text: displayText1
     }));
 
     conv.ask(new SimpleResponse({
       // Sending the details to the user
       speech: textToSpeech2,
-      displayText: displayText2
+      text: displayText2
     }));
 
     const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
@@ -1145,11 +1253,11 @@ function catch_error(app) {
       Most traded UIAs on the BTS DEX (of any type).
       https://github.com/oxarbitrage/bitshares-python-api-backend
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const parameter = {}; // The dict which will hold our parameter data
     parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('top_markets', 1, parameter); // Need to set the data
+    conv.contexts.set('top_markets', 1, parameter); // Need to set the data
 
     const request_options = {
       url: `http://23.94.69.140:5000/top_uias`,
@@ -1189,14 +1297,14 @@ function catch_error(app) {
       conv.close(new SimpleResponse({
         // No speech here, because we don't want to read everything out!
         speech: textToSpeech,
-        displayText: displayText
+        text: displayText
       }));
 
       const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
       if (hasScreen === true) {
         conv.close(new BasicCard({
          title: `Additional market information!`,
-         displayText: 'Want more info regarding top traded UIAs? Follow this link for more info!',
+         text: 'Want more info regarding top traded UIAs? Follow this link for more info!',
 
          buttons: new Button({
            title: 'Block explorer link',
@@ -1207,7 +1315,11 @@ function catch_error(app) {
       }
 
       } else {
-        catch_error(app); // Something's wrong with the HUG server!
+        conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
       }
     })
   })
@@ -1217,11 +1329,11 @@ function catch_error(app) {
       Most traded smartcoins on the BTS DEX (of any type).
       https://github.com/oxarbitrage/bitshares-python-api-backend
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const parameter = {}; // The dict which will hold our parameter data
     parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('top_markets', 1, parameter); // Need to set the data
+    conv.contexts.set('top_markets', 1, parameter); // Need to set the data
 
     const request_options = {
       url: `http://23.94.69.140:5000/top_smartcoins`,
@@ -1261,14 +1373,14 @@ function catch_error(app) {
           conv.close(new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech,
-            displayText: displayText
+            text: displayText
           }));
 
           const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
           if (hasScreen === true) {
             conv.close(new BasicCard({
               title: `Additional market information!`,
-              displayText: 'Want more info regarding top traded UIAs? Follow this link for more info!',
+              text: 'Want more info regarding top traded UIAs? Follow this link for more info!',
 
               buttons: new Button({
                 title: 'Block explorer link',
@@ -1279,7 +1391,11 @@ function catch_error(app) {
           }
 
       } else {
-        catch_error(app); // Something's wrong with the HUG server!
+        conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
       }
     })
   })
@@ -1289,11 +1405,11 @@ function catch_error(app) {
       Most traded assets on the BTS DEX (of any type).
       https://github.com/oxarbitrage/bitshares-python-api-backend
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const parameter = {}; // The dict which will hold our parameter data
     parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('top_markets', 1, parameter); // Need to set the data
+    conv.contexts.set('top_markets', 1, parameter); // Need to set the data
 
     const request_options = {
       url: `http://23.94.69.140:5000/top_markets`,
@@ -1335,14 +1451,14 @@ function catch_error(app) {
           conv.close(new SimpleResponse({
            // No speech here, because we don't want to read everything out!
            speech: textToSpeech,
-           displayText: displayText
+           text: displayText
          }));
 
          const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
           if (hasScreen === true) {
            conv.close(new BasicCard({
              title: `Additional market information!`,
-             displayText: 'Want more info regarding top traded UIAs? Follow this link for more info!',
+             text: 'Want more info regarding top traded UIAs? Follow this link for more info!',
 
              buttons: new Button({
                title: 'Block explorer link',
@@ -1353,7 +1469,11 @@ function catch_error(app) {
           }
 
       } else {
-        catch_error(app); // Something's wrong with the HUG server!
+        conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
       }
     })
   })
@@ -1362,11 +1482,11 @@ function catch_error(app) {
     /*
       market_24HRVolume function
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const parameter = {}; // The dict which will hold our parameter data
     parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('market_24HRVolume', 1, parameter); // Need to set the data
+    conv.contexts.set('market_24HRVolume', 1, parameter); // Need to set the data
 
     const request_options = {
       url: `${hug_host}/market_24hr_vol`,
@@ -1402,14 +1522,14 @@ function catch_error(app) {
           conv.close(new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech,
-            displayText: displayText
+            text: displayText
           }));
 
           const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
           if (hasScreen === true) {
             conv.close(new BasicCard({
               title: `Additional market information!`,
-              displayText: 'Want more info regarding top traded UIAs? Follow this link for more info!',
+              text: 'Want more info regarding top traded UIAs? Follow this link for more info!',
 
               buttons: new Button({
                 title: 'Block explorer link',
@@ -1420,11 +1540,19 @@ function catch_error(app) {
           }
 
         } else {
-          catch_error(app); // Something's wrong with the HUG server!
+          conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
           // TODO: REPLACE WITH FALLBACK!!
         }
       } else {
-        catch_error(app); // Something's wrong with the HUG server!
+        conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
       }
     })
   })
@@ -1433,11 +1561,13 @@ function catch_error(app) {
     /*
       market_Orderbook function
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const parameter = {}; // The dict which will hold our parameter data
     parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('market_Orderbook', 1, parameter); // Need to set the data
+    conv.contexts.set('market_Orderbook', 1, parameter); // Need to set the data
+
+    input_market_pair = "USD:BTS"
 
     const request_options = {
       url: `${hug_host}/market_orderbook`,
@@ -1457,16 +1587,14 @@ function catch_error(app) {
       if (!err && httpResponse.statusCode === 200) { // Check that the GET request didn't encounter any issues!
         if (body.valid_market === true && body.valid_key === true) {
 
-          var base_asset = input_market_pair.split("")[0];
-          var quote_asset = input_market_pair.split("")[1];
+          var base_asset = input_market_pair.split(":")[0];
+          var quote_asset = input_market_pair.split(":")[1];
 
           var market_orderbook = body.market_orderbook;
           var market_sell_orders = market_orderbook['asks'];
           var market_buy_orders = market_orderbook['bids'];
           var more_than_640 = false;
           var orderbook_limit = 10;
-
-
 
           var sell_text = `Sell orders: \n`;
           var buy_text = `Buy orders: \n`;
@@ -1506,20 +1634,20 @@ function catch_error(app) {
           conv.close(new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech1,
-            displayText: displayText1
+            text: displayText1
           }));
 
           conv.close(new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech2,
-            displayText: displayText2
+            text: displayText2
           }));
 
           const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
           if (hasScreen === true) {
             conv.close(new BasicCard({
               title: `Additional market open order information available!`,
-              displayText: 'Desire additional open order information? Follow this link for more info!!',
+              text: 'Desire additional open order information? Follow this link for more info!!',
               buttons: new Button({
                 title: 'Block explorer link',
                 url: `http://open-explorer.io/#/markets/${quote_asset}/${base_asset}`,
@@ -1529,11 +1657,19 @@ function catch_error(app) {
           }
 
         } else {
-          catch_error(app); // Something's wrong with the HUG server!
+          conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
           // TODO: REPLACE WITH FALLBACK!!
         }
       } else {
-        catch_error(app); // Something's wrong with the HUG server!
+        conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
       }
     })
   })
@@ -1542,11 +1678,14 @@ function catch_error(app) {
     /*
       market_Ticker function
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const parameter = {}; // The dict which will hold our parameter data
     parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('market_Ticker', 1, parameter); // Need to set the data
+    conv.contexts.set('market_Ticker', 1, parameter); // Need to set the data
+
+    input_market_pair = "USD:BTS"
+
     const request_options = {
       url: `${hug_host}/market_ticker`,
       method: 'GET', // GET request, not POST.
@@ -1636,17 +1775,17 @@ function catch_error(app) {
           conv.close(new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech,
-            displayText: displayText
+            text: displayText
           }));
 
           const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
           if (hasScreen === true) {
-            var base_asset = input_market_pair.split("")[0];
-            var quote_asset = input_market_pair.split("")[1];
+            var base_asset = input_market_pair.split(":")[0];
+            var quote_asset = input_market_pair.split(":")[1];
 
             conv.close(new BasicCard({
               title: `Additional market open order information available!`,
-              displayText: 'Desire additional open order information? Follow this link for more info!!',
+              text: 'Desire additional open order information? Follow this link for more info!!',
               buttons: new Button({
                 title: 'Block explorer link',
                 url: `http://open-explorer.io/#/markets/${quote_asset}/${base_asset}`,
@@ -1656,11 +1795,19 @@ function catch_error(app) {
           }
 
         } else {
-          catch_error(app); // Something's wrong with the HUG server!
+          conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
           // TODO: REPLACE WITH FALLBACK!!
         }
       } else {
-        catch_error(app); // Something's wrong with the HUG server!
+        conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
       }
     })
   })
@@ -1669,11 +1816,13 @@ function catch_error(app) {
     /*
       market_TradeHistory function
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
+
+    input_market_pair = "USD:BTS"
 
     const parameter = {}; // The dict which will hold our parameter data
     parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('market_TradeHistory', 1, parameter); // Need to set the data
+    conv.contexts.set('market_TradeHistory', 1, parameter); // Need to set the data
     const request_options = {
       url: `${hug_host}/market_trade_history`,
       method: 'GET', // GET request, not POST.
@@ -1719,8 +1868,8 @@ function catch_error(app) {
           }
 
           avg_rate = avg_rate/mth_limit;
-          var base_asset = input_market_pair.split("")[0];
-          var quote_asset = input_market_pair.split("")[1];
+          var base_asset = input_market_pair.split(":")[0];
+          var quote_asset = input_market_pair.split(":")[1];
 
           const textToSpeech1 = `<speak>` +
             `The last 10 ${input_market_pair} market trades saw ${total_bought} ${base_asset} purchased and ${total_sold} ${quote_asset} sold with an avg rate of ${avg_rate}.` +
@@ -1734,20 +1883,20 @@ function catch_error(app) {
           conv.close(new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech1,
-            displayText: displayText1
+            text: displayText1
           }));
 
           conv.close(new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: '',
-            displayText: displayText2
+            text: displayText2
           }));
 
           const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
           if (hasScreen === true) {
             conv.close(new BasicCard({
               title: `Additional market open order information available!`,
-              displayText: 'Desire additional open order information? Follow this link for more info!!',
+              text: 'Desire additional open order information? Follow this link for more info!!',
               buttons: new Button({
                 title: 'Block explorer link',
                 url: `http://open-explorer.io/#/markets/${quote_asset}/${base_asset}`,
@@ -1757,11 +1906,19 @@ function catch_error(app) {
           }
 
         } else {
-          catch_error(app); // Something's wrong with the HUG server!
+          conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
           // TODO: REPLACE WITH FALLBACK!!
         }
       } else {
-        catch_error(app); // Something's wrong with the HUG server!
+        conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
       }
     })
   })
@@ -1770,11 +1927,11 @@ function catch_error(app) {
     /*
       witness function
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const parameter = {}; // The dict which will hold our parameter data
     parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('witness', 1, parameter); // Need to set the data
+    conv.contexts.set('witness', 1, parameter); // Need to set the data
 
     const textToSpeech = `<speak>` +
       `Do you want information regarding an individual witness, or a summary of all active witnesses?` +
@@ -1785,7 +1942,7 @@ function catch_error(app) {
     conv.ask(new SimpleResponse({
       // Sending the details to the user
       speech: textToSpeech,
-      displayText: displayText
+      text: displayText
     }));
 
     const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
@@ -1798,11 +1955,11 @@ function catch_error(app) {
     /*
       witness_Active function
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const parameter = {}; // The dict which will hold our parameter data
     parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('witness_Active', 1, parameter); // Need to set the data
+    conv.contexts.set('witness_Active', 1, parameter); // Need to set the data
     const request_options = {
       url: `${hug_host}/list_of_witnesses`,
       method: 'GET', // GET request, not POST.
@@ -1869,7 +2026,7 @@ function catch_error(app) {
            conv.close(new SimpleResponse({
              // No speech here, because we don't want to read everything out!
              speech: textToSpeech1,
-             displayText: displayText1
+             text: displayText1
            }));
 
           var textToSpeech2 = ``;
@@ -1885,7 +2042,7 @@ function catch_error(app) {
             conv.close(new SimpleResponse({
               // No speech here, because we don't want to read everything out!
               speech: textToSpeech2,
-              displayText: displayText2
+              text: displayText2
             }));
           }
 
@@ -1893,7 +2050,7 @@ function catch_error(app) {
           if (hasScreen === true) {
             conv.close(new BasicCard({
               title: `Additional witness information available!`,
-              displayText: 'Desire additional witness information? Follow this link for more info!',
+              text: 'Desire additional witness information? Follow this link for more info!',
               buttons: new Button({
                 title: 'Block explorer link',
                 url: `http://open-explorer.io/#/witness`,
@@ -1902,10 +2059,18 @@ function catch_error(app) {
             }))
           }
         } else {
-          catch_error(app); // Something's wrong with the HUG server!
+          conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
         }
       } else {
-        catch_error(app); // Something's wrong with the HUG server!
+        conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
       }
     })
   })
@@ -1914,11 +2079,11 @@ function catch_error(app) {
     /*
       witness_One function
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const parameter = {}; // The dict which will hold our parameter data
     parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('witness_One', 1, parameter); // Need to set the data
+    conv.contexts.set('witness_One', 1, parameter); // Need to set the data
 
     const request_options = {
       url: `${hug_host}/find_witness`,
@@ -1981,14 +2146,14 @@ function catch_error(app) {
           conv.close(new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech1,
-            displayText: displayText1
+            text: displayText1
           }));
 
           const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
           if (hasScreen === true) {
             conv.close(new BasicCard({
               title: `Additional account information available!`,
-              displayText: `Desire additional account information about ${witness_name}? Follow this link for more info!`,
+              text: `Desire additional account information about ${witness_name}? Follow this link for more info!`,
               buttons: new Button({
                 title: 'Block explorer link',
                 url: `http://open-explorer.io/#/accounts/${witness_name}`
@@ -1997,11 +2162,19 @@ function catch_error(app) {
             }))
           }
         } else {
-          catch_error(app); // Something's wrong with the HUG server!
+          conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
           // TODO: REPLACE WITH FALLBACK!!
         }
       } else {
-        catch_error(app); // Something's wrong with the HUG server!
+        conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
       }
     })
   })
@@ -2010,11 +2183,11 @@ function catch_error(app) {
     /*
       worker function
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const parameter = {}; // The dict which will hold our parameter data
     parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('worker', 1, parameter); // Need to set the data
+    conv.contexts.set('worker', 1, parameter); // Need to set the data
 
     const textToSpeech = `<speak>` +
       `Do you want information regarding an individual worker proposal, or a summary of all active worker proposals?` +
@@ -2025,7 +2198,7 @@ function catch_error(app) {
     conv.ask(new SimpleResponse({
       // Sending the details to the user
       speech: textToSpeech,
-      displayText: displayText
+      text: displayText
     }));
 
     const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
@@ -2038,11 +2211,11 @@ function catch_error(app) {
     /*
       worker_Many function
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const parameter = {}; // The dict which will hold our parameter data
     parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('worker_Many', 1, parameter); // Need to set the data
+    conv.contexts.set('worker_Many', 1, parameter); // Need to set the data
 
     const request_options = {
       url: `${hug_host}/get_worker_proposals`,
@@ -2106,7 +2279,7 @@ function catch_error(app) {
           conv.close(new SimpleResponse({
             // Sending the details to the user
             speech: textToSpeech1,
-            displayText: displayText1
+            text: displayText1
           }));
 
           if (text2.length() > 1) {
@@ -2118,7 +2291,7 @@ function catch_error(app) {
             conv.close(new SimpleResponse({
               // Sending the details to the user
               speech: textToSpeech2,
-              displayText: displayText2
+              text: displayText2
             }));
           }
 
@@ -2126,7 +2299,7 @@ function catch_error(app) {
           if (hasScreen === true) {
             conv.close(new BasicCard({
               title: `Additional worker proposal information is available!`,
-              displayText: 'Desire additional worker proposal information? Follow this link for more info!',
+              text: 'Desire additional worker proposal information? Follow this link for more info!',
               buttons: new Button({
                 title: 'Block explorer link',
                 url: `http://open-explorer.io/#/workers`,
@@ -2136,11 +2309,19 @@ function catch_error(app) {
           }
 
         } else {
-          catch_error(app); // Something's wrong with the HUG server!
+          conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
           // TODO: REPLACE WITH FALLBACK!!
         }
       } else {
-        catch_error(app); // Something's wrong with the HUG server!
+        conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
       }
     })
   })
@@ -2149,11 +2330,11 @@ function catch_error(app) {
     /*
       worker_One function
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const parameter = {}; // The dict which will hold our parameter data
     parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('worker_One', 1, parameter); // Need to set the data
+    conv.contexts.set('worker_One', 1, parameter); // Need to set the data
 
     const request_options = {
       url: `${hug_host}/get_worker`,
@@ -2204,14 +2385,14 @@ function catch_error(app) {
           conv.close(new SimpleResponse({
             // Sending the details to the user
             speech: textToSpeech1,
-            displayText: displayText1
+            text: displayText1
           }));
 
           const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
           if (hasScreen === true) {
             conv.close(new BasicCard({
               title: `Additional worker proposal information is available!`,
-              displayText: 'Desire additional worker proposal information? Follow this link for more info!',
+              text: 'Desire additional worker proposal information? Follow this link for more info!',
               buttons: new Button({
                 title: 'Block explorer link',
                 url: `http://open-explorer.io/#/objects/${worker_id}`,
@@ -2221,11 +2402,19 @@ function catch_error(app) {
           }
 
         } else {
-          catch_error(app); // Something's wrong with the HUG server!
+          conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
           // TODO: REPLACE WITH FALLBACK!!
         }
       } else {
-        catch_error(app); // Something's wrong with the HUG server!
+        conv.close(new SimpleResponse({
+  // Sending the details to the user
+  speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+  text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+}));
       }
     })
   })
@@ -2242,22 +2431,22 @@ function catch_error(app) {
       "I didn't catch that. Do you want to A, B, C or D?",
       "I'm having trouble understanding. Do you want A, B, C or D?"
     ];
-    app.data.fallbackCount = parseInt(app.data.fallbackCount, 10); // Retrieve the value of the intent's fallback counter
-    app.data.fallbackCount++; // Iterate the fallback counter
+    conv.fallbackCount = parseInt(conv.fallbackCount, 10); // Retrieve the value of the intent's fallback counter
+    conv.fallbackCount++; // Iterate the fallback counter
 
-    if (app.data.fallbackCount > 3) {
+    if (conv.fallbackCount > 3) {
       // Google best practice is to quit after 3 attempts
       console.log("User misunderstood 3 times, quitting!");
       conv.close("Unfortunately, Beyond Bitshares was unable to understand user input. Sorry for the inconvenience, let's try again later though? Goodbye.");
     } else {
       // Within fallback attempt limit (<3)
       console.log("HANDLED FALLBACK!");
-      let current_fallback_phrase = MENU_FALLBACK[app.data.fallbackCount];
+      let current_fallback_phrase = MENU_FALLBACK[conv.fallbackCount];
 
       conv.ask(new SimpleResponse({
         // Sending the details to the user
         speech: current_fallback_phrase,
-        displayText: current_fallback_phrase
+        text: current_fallback_phrase
       }));
 
       const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
@@ -2272,11 +2461,11 @@ function catch_error(app) {
     Provides the user the ability to get help anywhere they are in the bot.
     Pretty much a duplicate of the welcome/home function, minus the greeting!
     */
-    app.data.fallbackCount = 0; // Required for tracking fallback attempts!
+    conv.fallbackCount = 0; // Required for tracking fallback attempts!
 
     const help_anywhere_parameter = {}; // The dict which will hold our parameter data
     help_anywhere_parameter['placeholder'] = 'placeholder'; // We need this placeholder
-    app.setContext('help_anywhere', 1, help_anywhere_parameter); // We need to insert data into the 'home' context for the home fallback to trigger!
+    conv.contexts.set('help_anywhere', 1, help_anywhere_parameter); // We need to insert data into the 'home' context for the home fallback to trigger!
 
     const textToSpeech = `<speak>` +
       `I heard you're having some problems with Beyond Bitshares? <break time="0.35s" /> ` +
@@ -2305,20 +2494,20 @@ function catch_error(app) {
     conv.ask(new SimpleResponse({
       // Sending the details to the user
       speech: textToSpeech,
-      displayText: textToDisplay
+      text: textToDisplay
     }));
 
     conv.ask(new SimpleResponse({
       // Sending the details to the user
       speech: textToSpeech2,
-      displayText: textToDisplay
+      text: textToDisplay
     }));
 
     const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
     if (hasScreen === true) {
       conv.ask(new BasicCard({
         title: `Template`,
-        displayText: 'Text to display in basic card.',
+        text: 'Text to display in basic card.',
         buttons: new Button({
           title: 'Block explorer link',
           url: `http://open-explorer.io`,
@@ -2341,22 +2530,22 @@ function catch_error(app) {
       "I'm having difficulties understanding what you want to do with Beyond Bitshares. Do you want A, B or C?"
     ];
 
-    app.data.fallbackCount = parseInt(app.data.fallbackCount, 10); // Retrieve the value of the intent's fallback counter
-    app.data.fallbackCount++; // Iterate the fallback counter
+    conv.fallbackCount = parseInt(conv.fallbackCount, 10); // Retrieve the value of the intent's fallback counter
+    conv.fallbackCount++; // Iterate the fallback counter
 
-    if (app.data.fallbackCount > 3) {
+    if (conv.fallbackCount > 3) {
       // Google best practice is to quit after 3 attempts
       console.log("User misunderstood 3 times, quitting!");
       conv.close("Unfortunately, Beyond Bitshares was unable to understand user input. Sorry for the inconvenience, let's try again later though? Goodbye.");
     } else {
       // Within fallback attempt limit (<3)
       console.log("HANDLED FALLBACK!");
-      let current_fallback_phrase = MENU_FALLBACK[app.data.fallbackCount];
+      let current_fallback_phrase = MENU_FALLBACK[conv.fallbackCount];
 
       conv.ask(new SimpleResponse({
         // Sending the details to the user
         speech: current_fallback_phrase,
-        displayText: current_fallback_phrase
+        text: current_fallback_phrase
       }));
 
       const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
@@ -2380,7 +2569,7 @@ function catch_error(app) {
     conv.close(new SimpleResponse({
       // Sending the details to the user
       speech: textToSpeech,
-      displayText: displayText
+      text: displayText
     }));
   })
 
