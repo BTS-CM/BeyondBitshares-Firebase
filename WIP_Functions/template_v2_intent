@@ -1,0 +1,123 @@
+function catch_error(conv, error_message) {
+  /*
+  Generic function for reporting errors & providing error handling for the user.
+  */
+  if(error_message instanceof Error) {
+      console.error(error_message);
+  } else {
+      console.error(new Error(error_message));
+  }
+  return conv.close(new SimpleResponse({
+    // If we somehow fail, do so gracefully!
+    speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
+    text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+  }));
+}
+
+function hug_request(target_function, method, qs_contents) {
+  // Setting URL and headers for request
+  var request_options = {
+    url: `${hug_host}/${target_function}`,
+    method: method, // GET request, not POST.
+    json: true,
+    headers: {
+      'User-Agent': 'Beyond Bitshares Bot',
+      'Content-Type': 'application/json'
+    },
+    qs: qs_contents
+  };
+
+  // Return new promise
+  return new Promise((resolve, reject) => {
+    // Do async job
+    requestLib(request_options, (err, resp, body) => {
+        if (err) {
+          // Returning an indication that the HUG REST query failed
+          const error_message = err;
+          reject(error_message);
+        } else {
+          if (resp.statusCode === 200) {
+            // Returning the body in a promise
+            resolve(body);
+          } else {
+            // Don't want anything other than 200
+            const error_message = resp;
+            reject(error_message);
+          }
+        }
+    })
+  });
+}
+
+///////////////////////////////////////////
+//// TEMPLATE STARTS HERE! ////////////////
+///////////////////////////////////////////
+
+app.intent('Template', conv => {
+  const qs_input = {
+    //  HUG REST GET request parameters
+    api_key: '123abc'
+  };
+  return hug_request('list_fees', 'GET', qs_input)
+  .then(body => {
+    const textToSpeech1 = `<speak>` +
+      `Template1` +
+      `</speak>`;
+    const displayText1 =  `Template1`;
+    const textToSpeech2 = `<speak>` +
+      `Template2` +
+      `</speak>`;
+    const displayText2 = `Template2`;
+
+    const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+
+    if (hasScreen === true) {
+      try {
+        return conv.close(
+          // 2 simple responses & a card
+          new SimpleResponse({
+            speech: textToSpeech1,
+            text: displayText1
+          }),
+          new SimpleResponse({
+            speech: textToSpeech2,
+            text: displayText2
+          }),
+          new BasicCard({
+          title: `Title Template`,
+          text: 'BasicCard text contents!',
+          buttons: new Button({
+            title: 'Button text',
+            url: 'http://open-explorer.io/#/fees',
+          }),
+          display: 'WHITE'
+          })
+        );
+      } catch (err) {
+        // Catch unexpected changes to async handling
+        catch_error(conv, err);
+      }
+    } else {
+      try {
+        return conv.close(
+          // 2 simple responses
+          new SimpleResponse({
+            speech: textToSpeech1,
+            text: displayText1
+          }),
+          new SimpleResponse({
+            speech: textToSpeech2,
+            text: displayText2
+          }),
+        );
+      } catch (err) {
+        // Catch unexpected changes to async handling
+        catch_error(conv, err);
+      }
+    }
+
+  })
+  .catch(error_message => {
+    catch_error(conv, error_message);
+  });
+})
