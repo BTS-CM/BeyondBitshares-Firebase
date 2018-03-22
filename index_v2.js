@@ -257,30 +257,30 @@ app.intent('Account.Balances', conv => {
 
       const displayText = text;
 
-      conv.ask(new SimpleResponse({
-        speech: textToSpeech,
-        text: displayText
-      }));
-
       const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
-      if (hasScreen === true) {
-        if (many_balances === true) {
-          try {
-            return conv.ask(new BasicCard({
-              title: `Insufficient space to display ${input_account}'s balances!'`,
-              text: 'This account has too many balances to show. Please navigate to the linked block explorer.',
-
-              buttons: new Button({
-                title: 'Block explorer link',
-                url: `http://open-explorer.io/#/accounts/${input_account}`,
-              }),
-              display: 'WHITE'
-            }));
-          } catch (err) {
-            // Catch unexpected changes to async handling
-            catch_error(conv, err);
-          }
-        }
+      if (hasScreen === true && many_balances === true) {
+        return conv.close(
+          new SimpleResponse({
+            speech: textToSpeech,
+            text: displayText
+          }),
+          new BasicCard({
+            title: `Insufficient space to display ${input_account}'s balances!'`,
+            text: 'This account has too many balances to show. Please navigate to the linked block explorer.',
+            buttons: new Button({
+              title: 'Block explorer link',
+              url: `http://open-explorer.io/#/accounts/${input_account}`,
+            }),
+            display: 'WHITE'
+          })
+        );
+      } else {
+        return conv.close(
+          new SimpleResponse({
+            speech: textToSpeech,
+            text: displayText
+          })
+        );
       }
     } else {
       catch_error(conv, `HUG Function failure!`);
@@ -1047,7 +1047,7 @@ app.intent('Fees', conv => {
           new SimpleResponse({
             speech: textToSpeech2,
             text: displayText2
-          }),
+          })
         );
       } catch (err) {
         // Catch unexpected changes to async handling
