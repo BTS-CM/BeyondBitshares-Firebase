@@ -97,7 +97,7 @@ app.intent('Welcome', conv => {
     text: textToDisplay
   }));
 
-  const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+  const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
   if (hasScreen === true) {
     conv.ask(new Suggestions('About', 'Accounts', 'Assets', 'Blockchain', 'Committee', 'Markets', 'Network', 'Workers', 'Fees', 'Help', 'Quit'));
   }
@@ -152,7 +152,7 @@ app.intent('About', conv => {
     })
   );
 
-  const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+  const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
   if (hasScreen === true) {
     conv.ask(new Suggestions('Delegated Proof-of-Stake Consensus', 'Price-Stable Cryptocurrencies', 'Decentralized Asset Exchange', 'Industrial Performance and Scalability', 'Dynamic Account Permissions', 'Recurring & Scheduled Payments', 'Referral Rewards Program', 'User-Issued Assets', 'Stakeholder-Approved Project Funding', 'Transferable Named Accounts', 'Help', 'Quit'));
   }
@@ -203,13 +203,14 @@ app.intent('Account', conv => {
     })
   );
 
-  const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+  const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
   if (hasScreen === true) {
     conv.ask(new Suggestions(`Account's Basic Overview`, 'Account Balances', `Account's Open Orders`, `Account's Trade History`, `Account's Call Positions`, 'Help', 'Quit'));
   }
 })
 
 app.intent('Account.Balances', conv => {
+  const input_account  = 'abit';
   const qs_input = {
     //  HUG REST GET request parameters
     account: input_account, // input
@@ -217,7 +218,7 @@ app.intent('Account.Balances', conv => {
   };
   return hug_request('account_balances', 'GET', qs_input)
   .then(body => {
-    if (body.success === true && body.valid_key === true) {
+    if (body.valid_key === true) {
       var text = ``;
       var voice = ``;
       var many_balances = false;
@@ -257,7 +258,7 @@ app.intent('Account.Balances', conv => {
 
       const displayText = text;
 
-      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
       if (hasScreen === true && many_balances === true) {
         return conv.close(
           new SimpleResponse({
@@ -302,6 +303,7 @@ app.intent('Account.CallPositions', conv => {
   //conv.contexts.set('account_CallPositions', 1, parameter); // Need to set the data
 
   // input_account = <Retrieve Account from DialogFlow>
+  const input_account  = 'abit';
   const qs_input = {
     //  HUG REST GET request parameters
     account: input_account, // input
@@ -309,7 +311,7 @@ app.intent('Account.CallPositions', conv => {
   };
   return hug_request('get_callpositions', 'GET', qs_input)
   .then(body => {
-    if (body.success === true && body.valid_key === true) {
+    if (body.valid_key === true) {
         var text = ``;
         var voice = ``;
 
@@ -381,7 +383,7 @@ app.intent('Account.Info', conv => {
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('account_Info', 1, parameter); // Need to set the data
   */
-
+  const input_account  = 'abit';
   const qs_input = {
     //  HUG REST GET request parameters
     account: input_account, // input
@@ -389,7 +391,7 @@ app.intent('Account.Info', conv => {
   };
   return hug_request('account_info', 'GET', qs_input)
   .then(body => {
-    if (body.success === true && body.valid_key === true) {
+    if (body.valid_key === true) {
 
       const info = body.account_info; // This var holds the account's call positions
       const id = info.id;
@@ -453,7 +455,7 @@ app.intent('Asset', conv => {
     text: displayText
   }));
 
-  const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+  const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
   if (hasScreen === true) {
     conv.ask(new Suggestions('Top Smartcoins', 'Top UIAs', 'Back', 'Help', 'Quit'));
   }
@@ -470,6 +472,7 @@ app.intent('Asset.One', conv => {
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('get_Asset', 1, parameter); // Need to set the data
   */
+  const input_asset_name  = 'USD';
   const qs_input = {
     //  HUG REST GET request parameters
     asset_name: input_asset_name, // input
@@ -477,7 +480,7 @@ app.intent('Asset.One', conv => {
   };
   return hug_request('get_asset', 'GET', qs_input)
   .then(body => {
-    if (body.success === true && body.valid_key === true) {
+    if (body.valid_key === true) {
 
       asset_data = body.asset_data;
 
@@ -544,7 +547,7 @@ app.intent('Block', conv => {
     text: displayText
   }));
 
-  const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+  const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
   if (hasScreen === true) {
     conv.ask(new Suggestions('Latest block details', 'Blockchain overview', 'Help', 'Back', 'Quit'));
   }
@@ -571,7 +574,7 @@ app.intent('Block.Latest', conv => {
       const previous = body.previous;
       const witness = body.witness;
       const transaction_merkle_root = body.transaction_merkle_root;
-      const tx_count = body.transactions.length();
+      const tx_count = Object.keys(body.transactions).length;
       const block_id = body.id;
       const block_date = body.block_date;
       const block_number = body.block_number;
@@ -587,7 +590,7 @@ app.intent('Block.Latest', conv => {
         `It was produced on ${block_date} by witness with ID ${witness}.\n\n` +
         `There were ${tx_count} transactions in the block.`;
 
-      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
       if (hasScreen === true) {
         return conv.close(
           new SimpleResponse({
@@ -634,7 +637,7 @@ app.intent('Block.One', conv => {
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('get_block_details', 1, parameter); // Need to set the data
   */
-
+  var input_block_number = 500000;
   const qs_input = {
     //  HUG REST GET request parameters
     block_number: input_block_number, // input
@@ -647,7 +650,8 @@ app.intent('Block.One', conv => {
         const previous = body.previous;
         const witness = body.witness;
         const transaction_merkle_root = body.transaction_merkle_root;
-        const tx_count = body.transactions.length();
+        const tx_count = Object.keys(body.transactions).length;
+
         const timestamp = body.timestamp;
 
         const textToSpeech = `<speak>` +
@@ -704,7 +708,7 @@ app.intent('Block.Overview', conv => {
   };
   return hug_request('chain_info', 'GET', qs_input)
   .then(body => {
-      if (body.success === true && body.valid_key === true) {
+      if (body.valid_key === true) {
 
         chain_info = body.chain_info;
 
@@ -774,7 +778,7 @@ app.intent('Committee', conv => {
     })
   );
 
-  const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+  const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
   if (hasScreen === true) {
     conv.ask(new Suggestions('Active committee members', 'Help', 'Back', 'Quit'));
   }
@@ -798,7 +802,7 @@ app.intent('Committee.Active', conv => {
   };
   return hug_request('get_committee_members', 'GET', qs_input)
   .then(body => {
-      if (body.success === true && body.valid_key === true) {
+      if (body.valid_key === true) {
 
         var text = ``;
         var voice = ``;
@@ -806,12 +810,15 @@ app.intent('Committee.Active', conv => {
         const committee_members = body.committee_members;
 
         if (Array.isArray(committee_members)) {
-
-          for (member in committee_members) {
+          for (var member in committee_members) {
+            console.log(member);
+            var member_data = committee_members[member];
             if (text.length < 640) {
-              if (member.status === true) {
-                text += `ID: ${member.id}, User ID: ${member.committee_member_account}, Vote ID: ${member.vote_id}, Total votes: ${member.total_votes}.\n`;
-                voice += `Committee ID: ${member.id} is active with ${member.total_votes} votes.`;
+              if (member_data.status === true) {
+                console.log("TEXT WRITTEN");
+                var committee_calculated_votes = member_data.total_votes / 10000
+                text += `ID: ${member_data.id}, User ID: ${member_data.committee_member_account}, Total votes: ${committee_calculated_votes}.\n`;
+                voice += `Committee ID: ${member_data.id} is active with ${committee_calculated_votes} votes.`;
               } else {
                 continue;
               }
@@ -821,7 +828,6 @@ app.intent('Committee.Active', conv => {
               break;
             }
           }
-
         }
 
         const textToSpeech = `<speak>` +
@@ -829,8 +835,8 @@ app.intent('Committee.Active', conv => {
           `</speak>`;
 
         const displayText = text;
+        const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
 
-        const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
         if (hasScreen === true && more_than_640 === true) {
           return conv.close(
             new SimpleResponse({
@@ -858,7 +864,7 @@ app.intent('Committee.Active', conv => {
           );
         }
       } else {
-        return catch_error(conv, `HUG Function failure!`);
+        return catch_error(conv, `HUG Function failure! SUCCESS OR KEY`);
         // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
       }
   })
@@ -877,7 +883,7 @@ app.intent('Committee.One', conv => {
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('get_committee_member', 1, parameter); // Need to set the data
   */
-
+  const input_committee_id = '1.5.15';
   const qs_input = {
     //  HUG REST GET request parameters
     committee_id: input_committee_id, // input
@@ -885,7 +891,7 @@ app.intent('Committee.One', conv => {
   };
   return hug_request('get_committee_member', 'GET', qs_input)
   .then(body => {
-      if (body.success === true && body.valid_key === true) {
+      if (body.valid_key === true) {
 
         const get_committee_member_data = body.get_committee_member;
         const committee_member_account = get_committee_member_data['committee_member_account'];
@@ -1000,7 +1006,7 @@ app.intent('Fees', conv => {
                           `Transfer from blind: ${body.network_fees.transfer_from_blind.fee}\n` +
                           `Asset claim fees: ${body.network_fees.asset_claim_fees.fee}\n`;
 
-    const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+    const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
 
     if (hasScreen === true) {
       return conv.close(
@@ -1085,7 +1091,7 @@ app.intent('Market', conv => {
     text: displayText2
   }));
 
-  const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+  const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
   if (hasScreen === true) {
     conv.ask(new Suggestions('Back', 'Help', 'Quit'));
   }
@@ -1137,7 +1143,7 @@ app.intent('Market.TopUIA', conv => {
       const displayText = `The top traded UIAs on Bitshares are as follows:\n` +
         inner_text;
 
-      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
       if (hasScreen === true) {
         return conv.close(
           new SimpleResponse({
@@ -1221,7 +1227,7 @@ app.intent('Market.TopMPA', conv => {
       const displayText = `The top traded smartcoins on Bitshares are as follows:\n` +
         inner_text;
 
-      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
       if (hasScreen === true) {
         return conv.close(
           new SimpleResponse({
@@ -1305,7 +1311,7 @@ app.intent('Market.TopAll', conv => {
       const displayText = `The top markets on Bitshares are as follows:\n` +
         inner_text;
 
-      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
       if (hasScreen === true) {
         return conv.close(
           new SimpleResponse({
@@ -1354,10 +1360,10 @@ app.intent('Market.24HRVolume', conv => {
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('market_24HRVolume', 1, parameter); // Need to set the data
   */
-
+  const input_market_pair = 'USD:BTS';
   const qs_input = {
     //  HUG REST GET request parameters
-    committee_id: input_committee_id, // input
+    market_pair: input_market_pair, // input
     api_key: '123abc'
   };
   return hug_request('market_24hr_vol', 'GET', qs_input)
@@ -1377,7 +1383,7 @@ app.intent('Market.24HRVolume', conv => {
 
       const displayText = `${base_asset_amount} ${base_asset} were traded for ${quote_asset_amount} ${quote_asset} at an average rate of ${rate} ${trading_pair} within the last 24 hours.`;
 
-      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
       if (hasScreen === true) {
         return conv.close(
           new SimpleResponse({
@@ -1481,7 +1487,7 @@ app.intent('Market.Orderbook', conv => {
         `${buy_voice_inner}` +
         `</speak>`;
 
-      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
       if (hasScreen === true) {
         return conv.close(
           new SimpleResponse({
@@ -1618,7 +1624,7 @@ app.intent('Market.Ticker', conv => {
         `Price: ${l_price}\n` +
         `Percentage change: ${percentChange}`;
 
-      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
       if (hasScreen === true) {
         var base_asset = input_market_pair.split(":")[0];
         var quote_asset = input_market_pair.split(":")[1];
@@ -1720,7 +1726,7 @@ app.intent('Market.TradeHistory', conv => {
       const displayText2 = `Last 10 market trades:\n` +
         `${trade_text}`;
 
-      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
       if (hasScreen === true) {
         return conv.close(
           new SimpleResponse({
@@ -1790,7 +1796,7 @@ app.intent('Witness', conv => {
     text: displayText
   }));
 
-  const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+  const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
   if (hasScreen === true) {
     conv.ask(new Suggestions('Active witness summary', 'Help', 'Quit'));
   }
@@ -1812,7 +1818,7 @@ app.intent('Witness.Active', conv => {
   };
   return hug_request('list_of_witnesses', 'GET', qs_input)
   .then(body => {
-    if (body.success === true && body.valid_key === true) {
+    if (body.valid_key === true) {
 
       const witnesses = body.witnesses;
       const num_active_witnesses = body.witness_count;
@@ -1871,7 +1877,7 @@ app.intent('Witness.Active', conv => {
         displayText2 = inner_text2;
       }
 
-      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
       if (hasScreen === true) {
         return conv.close(
           new SimpleResponse({
@@ -1928,10 +1934,10 @@ app.intent('Witness.One', conv => {
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('witness_One', 1, parameter); // Need to set the data
   */
-
+  const input_witness_name = 'delegate-1.lafona';
   const qs_input = {
     //  HUG REST GET request parameters
-    witness_name: witness_name, // input
+    witness_name: input_witness_name, // input
     api_key: '123abc'
   };
   return hug_request('find_witness', 'GET', qs_input)
@@ -1977,8 +1983,8 @@ app.intent('Witness.One', conv => {
       if (url.length() > 1) {
         displayText1 += `URL: ${url}`;
       }
-      
-      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+
+      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
       if (hasScreen === true) {
         return conv.close(
           new SimpleResponse({
@@ -2037,7 +2043,7 @@ app.intent('Worker', conv => {
     text: displayText
   }));
 
-  const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+  const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
   if (hasScreen === true) {
     conv.ask(new Suggestions('Active worker proposals', 'Help', 'Quit'));
   }
@@ -2059,7 +2065,7 @@ app.intent('Worker.Many', conv => {
   };
   return hug_request('get_worker_proposals', 'GET', qs_input)
   .then(body => {
-    if (body.success === true && body.valid_key === true) {
+    if (body.valid_key === true) {
 
       var workers = body.workers;
       const current_time = moment();
@@ -2110,7 +2116,7 @@ app.intent('Worker.Many', conv => {
         const displayText2 = text2;
       }
 
-      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
       if (hasScreen === true) {
         return conv.close(
           new SimpleResponse({
@@ -2167,6 +2173,7 @@ app.intent('Worker.One', conv => {
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('worker_One', 1, parameter); // Need to set the data
   */
+  const input_worker_id = '1.14.50';
   const qs_input = {
     //  HUG REST GET request parameters
     worker_id: input_worker_id, // input
@@ -2204,7 +2211,7 @@ app.intent('Worker.One', conv => {
         `Total votes: ${total_votes}.` +
         `URL: ${url}`;
 
-      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
       if (hasScreen === true) {
         return conv.close(
           new SimpleResponse({
@@ -2272,7 +2279,7 @@ app.intent('menuFallback', conv => {
       text: current_fallback_phrase
     }));
 
-    const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+    const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
     if (hasScreen === true) {
       conv.ask(new Suggestions('Help', 'Quit'));
     }
@@ -2326,7 +2333,7 @@ app.intent('getHelpAnywhere', conv => {
     text: textToDisplay
   }));
 
-  const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+  const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
   if (hasScreen === true) {
     conv.ask(new BasicCard({
       title: `Template`,
@@ -2371,7 +2378,7 @@ app.intent('getHelpFallback', conv => {
       text: current_fallback_phrase
     }));
 
-    const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
+    const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
     if (hasScreen === true) {
       conv.ask(new Suggestions('Help', 'Quit'));
     }
