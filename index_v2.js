@@ -17,7 +17,6 @@ const moment = require('moment'); // For handling time.
 const app = dialogflow({
   debug: true
 }) // Creating the primary dialogflow app element
-const hug_host = 'https://btsapi.grcnode.co.uk'; // Change this to your own HUG REST API server (if you want)
 
 function catch_error(conv, error_message) {
   /*
@@ -35,10 +34,18 @@ function catch_error(conv, error_message) {
   }));
 }
 
-function hug_request(target_function, method, qs_contents) {
+function hug_request(api_host, target_function, method, qs_contents) {
   // Setting URL and headers for request
+
+  var api_host = '';
+  if (target_url === 'HUG') {
+    api_host = 'https://btsapi.grcnode.co.uk'; // Change this to your own HUG REST API server (if you want)
+  } else {
+    api_host = 'https://23.94.69.140:5000';
+  }
+
   var request_options = {
-    url: `${hug_host}/${target_function}`,
+    url: `${api_host}/${target_function}`,
     method: method, // GET request, not POST.
     json: true,
     headers: {
@@ -216,7 +223,7 @@ app.intent('Account.Balances', conv => {
     account: input_account, // input
     api_key: '123abc'
   };
-  return hug_request('account_balances', 'GET', qs_input)
+  return hug_request('HUG', 'account_balances', 'GET', qs_input)
   .then(body => {
     if (body.valid_key === true) {
       var text = ``;
@@ -284,7 +291,7 @@ app.intent('Account.Balances', conv => {
         );
       }
     } else {
-      return catch_error(conv, `HUG Function failure!`);
+      return catch_error(conv, `HUG Function failure! account_balances`);
     }
   })
   .catch(error_message => {
@@ -309,7 +316,7 @@ app.intent('Account.CallPositions', conv => {
     account: input_account, // input
     api_key: '123abc'
   };
-  return hug_request('get_callpositions', 'GET', qs_input)
+  return hug_request('HUG', 'get_callpositions', 'GET', qs_input)
   .then(body => {
     if (body.valid_key === true) {
         var text = ``;
@@ -364,7 +371,7 @@ app.intent('Account.CallPositions', conv => {
           text: displayText
         }));
       } else {
-        return catch_error(conv, `HUG Function failure!`);
+        return catch_error(conv, `HUG Function failure! get_callpositions`);
       }
     })
   .catch(error_message => {
@@ -389,7 +396,7 @@ app.intent('Account.Info', conv => {
     account: input_account, // input
     api_key: '123abc'
   };
-  return hug_request('account_info', 'GET', qs_input)
+  return hug_request('HUG', 'account_info', 'GET', qs_input)
   .then(body => {
     if (body.valid_key === true) {
 
@@ -417,7 +424,7 @@ app.intent('Account.Info', conv => {
       );
 
     } else {
-    return catch_error(conv, `HUG Function failure!`);
+    return catch_error(conv, `HUG Function failure! account_info`);
     }
   })
   .catch(error_message => {
@@ -478,7 +485,7 @@ app.intent('Asset.One', conv => {
     asset_name: input_asset_name, // input
     api_key: '123abc'
   };
-  return hug_request('get_asset', 'GET', qs_input)
+  return hug_request('HUG', 'get_asset', 'GET', qs_input)
   .then(body => {
     if (body.valid_key === true) {
 
@@ -510,7 +517,7 @@ app.intent('Asset.One', conv => {
         text: displayText
       }))
     } else {
-      return catch_error(conv, `HUG Function failure!`);
+      return catch_error(conv, `HUG Function failure! get_asset`);
       // TODO: Change to asset name fallback in future
     }
   })
@@ -567,7 +574,7 @@ app.intent('Block.Latest', conv => {
     //  HUG REST GET request parameters
     api_key: '123abc'
   };
-  return hug_request('get_latest_block', 'GET', qs_input)
+  return hug_request('HUG', 'get_latest_block', 'GET', qs_input)
   .then(body => {
     if (body.valid_block_number === true && body.valid_key === true) {
 
@@ -618,7 +625,7 @@ app.intent('Block.Latest', conv => {
         );
       }
     } else {
-      return catch_error(conv, `HUG Function failure!`);
+      return catch_error(conv, `HUG Function failure! get_latest_block`);
       // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
     }
   })
@@ -643,7 +650,7 @@ app.intent('Block.One', conv => {
     block_number: input_block_number, // input
     api_key: '123abc'
   };
-  return hug_request('get_block_details', 'GET', qs_input)
+  return hug_request('HUG', 'get_block_details', 'GET', qs_input)
   .then(body => {
       if (body.valid_block_number === true && body.valid_key === true) {
 
@@ -682,7 +689,7 @@ app.intent('Block.One', conv => {
           })
         );
       } else {
-        return catch_error(conv, `HUG Function failure!`);
+        return catch_error(conv, `HUG Function failure! get_block_details`);
         // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
       }
   })
@@ -706,7 +713,7 @@ app.intent('Block.Overview', conv => {
     //  HUG REST GET request parameters
     api_key: '123abc'
   };
-  return hug_request('chain_info', 'GET', qs_input)
+  return hug_request('HUG', 'chain_info', 'GET', qs_input)
   .then(body => {
       if (body.valid_key === true) {
 
@@ -743,7 +750,7 @@ app.intent('Block.Overview', conv => {
         )
 
       } else {
-        return catch_error(conv, `HUG Function failure!`);
+        return catch_error(conv, `HUG Function failure! chain_info`);
         // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
       }
   })
@@ -800,7 +807,7 @@ app.intent('Committee.Active', conv => {
     //  HUG REST GET request parameters
     api_key: '123abc'
   };
-  return hug_request('get_committee_members', 'GET', qs_input)
+  return hug_request('HUG', 'get_committee_members', 'GET', qs_input)
   .then(body => {
       if (body.valid_key === true) {
 
@@ -811,11 +818,11 @@ app.intent('Committee.Active', conv => {
 
         if (Array.isArray(committee_members)) {
           for (var member in committee_members) {
-            console.log(member);
+            //console.log(member);
             var member_data = committee_members[member];
             if (text.length < 640) {
               if (member_data.status === true) {
-                console.log("TEXT WRITTEN");
+                //console.log("TEXT WRITTEN");
                 var committee_calculated_votes = member_data.total_votes / 10000
                 text += `ID: ${member_data.id}, User ID: ${member_data.committee_member_account}, Total votes: ${committee_calculated_votes}.\n`;
                 voice += `Committee ID: ${member_data.id} is active with ${committee_calculated_votes} votes.`;
@@ -864,7 +871,7 @@ app.intent('Committee.Active', conv => {
           );
         }
       } else {
-        return catch_error(conv, `HUG Function failure! SUCCESS OR KEY`);
+        return catch_error(conv, `HUG Function failure! get_committee_members`);
         // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
       }
   })
@@ -889,7 +896,7 @@ app.intent('Committee.One', conv => {
     committee_id: input_committee_id, // input
     api_key: '123abc'
   };
-  return hug_request('get_committee_member', 'GET', qs_input)
+  return hug_request('HUG', 'get_committee_member', 'GET', qs_input)
   .then(body => {
       if (body.valid_key === true) {
 
@@ -929,7 +936,7 @@ app.intent('Committee.One', conv => {
         }));
 
       } else {
-        return catch_error(conv, `HUG Function failure!`);
+        return catch_error(conv, `HUG Function failure! get_committee_member`);
         // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
       }
   })
@@ -943,7 +950,7 @@ app.intent('Fees', conv => {
     //  HUG REST GET request parameters
     api_key: '123abc'
   };
-  return hug_request('list_fees', 'GET', qs_input)
+  return hug_request('HUG', 'list_fees', 'GET', qs_input)
   .then(body => {
     const textToSpeech1 = `<speak>` +
       `The most important Bitshares network fees are:` +
@@ -1102,25 +1109,19 @@ app.intent('Market.TopUIA', conv => {
     Most traded UIAs on the BTS DEX (of any type).
     https://github.com/oxarbitrage/bitshares-python-api-backend
   */
+  /*
   conv.fallbackCount = 0; // Required for tracking fallback attempts!
-
   const parameter = {}; // The dict which will hold our parameter data
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('top_markets', 1, parameter); // Need to set the data
+  */
 
-  const request_options = {
-    url: `http://23.94.69.140:5000/top_uias`,
-    method: 'GET', // GET request, not POST.
-    json: true,
-    headers: {
-      'User-Agent': 'Beyond Bitshares Bot',
-      'Content-Type': 'application/json'
-    }
+  const qs_input = {
+    // None needed
   };
 
-  requestLib(request_options, (err, httpResponse, body) => {
-    if (!err && httpResponse.statusCode === 200) { // Check that the GET request didn't encounter any issues!
-
+  return hug_request('oxarbitrage', 'top_uias', 'GET', qs_input)
+  .then(body => {
       const top_uias = body;
       var inner_voice = ``;
       var inner_text = ``;
@@ -1171,98 +1172,86 @@ app.intent('Market.TopUIA', conv => {
         );
       }
 
-    } else {
-      return conv.close(new SimpleResponse({
-        // Sending the details to the user
-        speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
-        text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
-      }));
-    }
+    })
+    .catch(error => {
+      // Catch unexpected changes to async handling
+      return catch_error(conv, err);
+    });
   })
-})
 
 app.intent('Market.TopMPA', conv => {
   /*
     Most traded smartcoins on the BTS DEX (of any type).
     https://github.com/oxarbitrage/bitshares-python-api-backend
   */
+  /*
   conv.fallbackCount = 0; // Required for tracking fallback attempts!
-
   const parameter = {}; // The dict which will hold our parameter data
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('top_markets', 1, parameter); // Need to set the data
+  */
 
-  const request_options = {
-    url: `http://23.94.69.140:5000/top_smartcoins`,
-    method: 'GET', // GET request, not POST.
-    json: true,
-    headers: {
-      'User-Agent': 'Beyond Bitshares Bot',
-      'Content-Type': 'application/json'
-    }
+  const qs_input = {
+    // None needed
   };
 
-  requestLib(request_options, (err, httpResponse, body) => {
-    if (!err && httpResponse.statusCode === 200) { // Check that the GET request didn't encounter any issues!
+  return hug_request('oxarbitrage', 'top_smartcoins', 'GET', qs_input)
+  .then(body => {
+    const top_smartcoins = body;
+    var inner_voice = ``;
+    var inner_text = ``;
 
-      const top_smartcoins = body;
-      var inner_voice = ``;
-      var inner_text = ``;
-
-      var iterator = 1;
-      for (smartcoin in top_smartcoins) {
-        if (inner_text < 640) {
-          inner_voice += `<say-as interpret-as="ordinal">${iterator}</say-as>: ${smartcoin[0]} with ${smartcoin[1]} trading volume.`;
-          inner_text += `${smartcoin[0]}: ${smartcoin[1]}.\n`;
-        } else {
-          break;
-        }
-      }
-
-      const textToSpeech = `<speak>` +
-        `The top traded smartcoins on Bitshares are as follows:` +
-        inner_voice +
-        `</speak>`;
-
-      const displayText = `The top traded smartcoins on Bitshares are as follows:\n` +
-        inner_text;
-
-      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
-      if (hasScreen === true) {
-        return conv.close(
-          new SimpleResponse({
-            // No speech here, because we don't want to read everything out!
-            speech: textToSpeech,
-            text: displayText
-          }),
-          new BasicCard({
-            title: `Additional market information!`,
-            text: 'Want more info regarding top traded UIAs? Follow this link for more info!',
-
-            buttons: new Button({
-              title: 'Block explorer link',
-              url: 'http://open-explorer.io/#/markets',
-            }),
-            display: 'WHITE'
-          })
-        );
+    var iterator = 1;
+    for (smartcoin in top_smartcoins) {
+      if (inner_text < 640) {
+        inner_voice += `<say-as interpret-as="ordinal">${iterator}</say-as>: ${smartcoin[0]} with ${smartcoin[1]} trading volume.`;
+        inner_text += `${smartcoin[0]}: ${smartcoin[1]}.\n`;
       } else {
-        return conv.close(
-          new SimpleResponse({
-            // No speech here, because we don't want to read everything out!
-            speech: textToSpeech,
-            text: displayText
-          })
-        );
+        break;
       }
+    }
+
+    const textToSpeech = `<speak>` +
+      `The top traded smartcoins on Bitshares are as follows:` +
+      inner_voice +
+      `</speak>`;
+
+    const displayText = `The top traded smartcoins on Bitshares are as follows:\n` +
+      inner_text;
+
+    const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
+    if (hasScreen === true) {
+      return conv.close(
+        new SimpleResponse({
+          // No speech here, because we don't want to read everything out!
+          speech: textToSpeech,
+          text: displayText
+        }),
+        new BasicCard({
+          title: `Additional market information!`,
+          text: 'Want more info regarding top traded UIAs? Follow this link for more info!',
+
+          buttons: new Button({
+            title: 'Block explorer link',
+            url: 'http://open-explorer.io/#/markets',
+          }),
+          display: 'WHITE'
+        })
+      );
     } else {
-      return conv.close(new SimpleResponse({
-        // Sending the details to the user
-        speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
-        text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
-      }));
+      return conv.close(
+        new SimpleResponse({
+          // No speech here, because we don't want to read everything out!
+          speech: textToSpeech,
+          text: displayText
+        })
+      );
     }
   })
+  .catch(error => {
+    // Catch unexpected changes to async handling
+    return catch_error(conv, err);
+  });
 })
 
 app.intent('Market.TopAll', conv => {
@@ -1270,84 +1259,73 @@ app.intent('Market.TopAll', conv => {
     Most traded assets on the BTS DEX (of any type).
     https://github.com/oxarbitrage/bitshares-python-api-backend
   */
+  /*
   conv.fallbackCount = 0; // Required for tracking fallback attempts!
-
   const parameter = {}; // The dict which will hold our parameter data
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('top_markets', 1, parameter); // Need to set the data
-
-  const request_options = {
-    url: `http://23.94.69.140:5000/top_markets`,
-    method: 'GET', // GET request, not POST.
-    json: true,
-    headers: {
-      'User-Agent': 'Beyond Bitshares Bot',
-      'Content-Type': 'application/json'
-    }
+  */
+  const qs_input = {
+    // None needed
   };
 
-  requestLib(request_options, (err, httpResponse, body) => {
-    if (!err && httpResponse.statusCode === 200) { // Check that the GET request didn't encounter any issues!
+  return hug_request('oxarbitrage', 'top_markets', 'GET', qs_input)
+  .then(body => {
+    const top_markets = body;
+    var inner_voice = ``;
+    var inner_text = ``;
 
-      const top_markets = body;
-      var inner_voice = ``;
-      var inner_text = ``;
-
-      var iterator = 1;
-      for (market in top_markets) {
-        if (inner_text < 640) {
-          inner_voice += `<say-as interpret-as="ordinal">${iterator}</say-as>: The ${market[0]} trading pair with ${market[1]} trading volume.`;
-          inner_text += `${market[0]} trading pair with ${market[1]} trading volume.\n`;
-        } else {
-          break;
-        }
-      }
-
-      const textToSpeech = `<speak>` +
-        `The top markets on Bitshares are as follows:` +
-        inner_voice +
-        `</speak>`;
-
-      const displayText = `The top markets on Bitshares are as follows:\n` +
-        inner_text;
-
-      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
-      if (hasScreen === true) {
-        return conv.close(
-          new SimpleResponse({
-            // No speech here, because we don't want to read everything out!
-            speech: textToSpeech,
-            text: displayText
-          }),
-          new BasicCard({
-            title: `Additional market information!`,
-            text: 'Want more info regarding top traded UIAs? Follow this link for more info!',
-
-            buttons: new Button({
-              title: 'Block explorer link',
-              url: 'http://open-explorer.io/#/markets',
-            }),
-            display: 'WHITE'
-          })
-        );
+    var iterator = 1;
+    for (market in top_markets) {
+      if (inner_text < 640) {
+        inner_voice += `<say-as interpret-as="ordinal">${iterator}</say-as>: The ${market[0]} trading pair with ${market[1]} trading volume.`;
+        inner_text += `${market[0]} trading pair with ${market[1]} trading volume.\n`;
       } else {
-        return conv.close(
-          new SimpleResponse({
-            // No speech here, because we don't want to read everything out!
-            speech: textToSpeech,
-            text: displayText
-          })
-        );
+        break;
       }
+    }
 
+    const textToSpeech = `<speak>` +
+      `The top markets on Bitshares are as follows:` +
+      inner_voice +
+      `</speak>`;
+
+    const displayText = `The top markets on Bitshares are as follows:\n` +
+      inner_text;
+
+    const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
+    if (hasScreen === true) {
+      return conv.close(
+        new SimpleResponse({
+          // No speech here, because we don't want to read everything out!
+          speech: textToSpeech,
+          text: displayText
+        }),
+        new BasicCard({
+          title: `Additional market information!`,
+          text: 'Want more info regarding top traded UIAs? Follow this link for more info!',
+
+          buttons: new Button({
+            title: 'Block explorer link',
+            url: 'http://open-explorer.io/#/markets',
+          }),
+          display: 'WHITE'
+        })
+      );
     } else {
-      return conv.close(new SimpleResponse({
-        // Sending the details to the user
-        speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
-        text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
-      }));
+      return conv.close(
+        new SimpleResponse({
+          // No speech here, because we don't want to read everything out!
+          speech: textToSpeech,
+          text: displayText
+        })
+      );
     }
   })
+  .catch(error => {
+    // Catch unexpected changes to async handling
+    return catch_error(conv, err);
+  });
 })
 
 app.intent('Market.24HRVolume', conv => {
@@ -1366,7 +1344,7 @@ app.intent('Market.24HRVolume', conv => {
     market_pair: input_market_pair, // input
     api_key: '123abc'
   };
-  return hug_request('market_24hr_vol', 'GET', qs_input)
+  return hug_request('HUG', 'market_24hr_vol', 'GET', qs_input)
   .then(body => {
     if (body.valid_market === true && body.valid_key === true) {
 
@@ -1413,7 +1391,7 @@ app.intent('Market.24HRVolume', conv => {
       }
 
     } else {
-      return catch_error(conv, `HUG Function failure!`);
+      return catch_error(conv, `HUG Function failure! market_24hr_vol`);
       // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
     }
   })
@@ -1439,7 +1417,7 @@ app.intent('Market.Orderbook', conv => {
     market_pair: input_market_pair, // input
     api_key: '123abc'
   };
-  return hug_request('market_orderbook', 'GET', qs_input)
+  return hug_request('HUG', 'market_orderbook', 'GET', qs_input)
   .then(body => {
     if (body.valid_market === true && body.valid_key === true) {
 
@@ -1526,7 +1504,7 @@ app.intent('Market.Orderbook', conv => {
       }
 
     } else {
-      return catch_error(conv, `HUG Function failure!`);
+      return catch_error(conv, `HUG Function failure! market_orderbook`);
       // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
     }
   })
@@ -1552,7 +1530,7 @@ app.intent('Market.Ticker', conv => {
     market_pair: input_market_pair, // input
     api_key: '123abc'
   };
-  return hug_request('market_ticker', 'GET', qs_input)
+  return hug_request('HUG', 'market_ticker', 'GET', qs_input)
   .then(body => {
     if (body.valid_market === true && body.valid_key === true) {
 
@@ -1656,7 +1634,7 @@ app.intent('Market.Ticker', conv => {
       }
 
     } else {
-      return catch_error(conv, `HUG Function failure!`);
+      return catch_error(conv, `HUG Function failure! market_ticker`);
       // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
     }
   })
@@ -1682,7 +1660,7 @@ app.intent('Market.TradeHistory', conv => {
     market_pair: input_market_pair, // input
     api_key: '123abc'
   };
-  return hug_request('market_trade_history', 'GET', qs_input)
+  return hug_request('HUG', 'market_trade_history', 'GET', qs_input)
   .then(body => {
     if (body.valid_market === true && body.valid_key === true) {
 
@@ -1765,7 +1743,7 @@ app.intent('Market.TradeHistory', conv => {
       }
 
     } else {
-      return catch_error(conv, `HUG Function failure!`);
+      return catch_error(conv, `HUG Function failure! market_trade_history`);
       // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
     }
   })
@@ -1816,7 +1794,7 @@ app.intent('Witness.Active', conv => {
     //  HUG REST GET request parameters
     api_key: '123abc'
   };
-  return hug_request('list_of_witnesses', 'GET', qs_input)
+  return hug_request('HUG', 'list_of_witnesses', 'GET', qs_input)
   .then(body => {
     if (body.valid_key === true) {
 
@@ -1915,7 +1893,7 @@ app.intent('Witness.Active', conv => {
         );
       }
     } else {
-      return catch_error(conv, `HUG Function failure!`);
+      return catch_error(conv, `HUG Function failure! list_of_witnesses`);
       // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
     }
   })
@@ -1940,7 +1918,7 @@ app.intent('Witness.One', conv => {
     witness_name: input_witness_name, // input
     api_key: '123abc'
   };
-  return hug_request('find_witness', 'GET', qs_input)
+  return hug_request('HUG', 'find_witness', 'GET', qs_input)
   .then(body => {
     if (body.valid_witness === true && body.valid_key === true) {
 
@@ -2012,7 +1990,7 @@ app.intent('Witness.One', conv => {
         );
       }
     } else {
-      return catch_error(conv, `HUG Function failure!`);
+      return catch_error(conv, `HUG Function failure! find_witness`);
       // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
     }
   })
@@ -2063,7 +2041,7 @@ app.intent('Worker.Many', conv => {
     //  HUG REST GET request parameters
     api_key: '123abc'
   };
-  return hug_request('get_worker_proposals', 'GET', qs_input)
+  return hug_request('HUG', 'get_worker_proposals', 'GET', qs_input)
   .then(body => {
     if (body.valid_key === true) {
 
@@ -2154,7 +2132,7 @@ app.intent('Worker.Many', conv => {
       }
 
     } else {
-      return catch_error(conv, `HUG Function failure!`);
+      return catch_error(conv, `HUG Function failure! get_worker_proposals`);
       // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
     }
   })
@@ -2179,7 +2157,7 @@ app.intent('Worker.One', conv => {
     worker_id: input_worker_id, // input
     api_key: '123abc'
   };
-  return hug_request('get_worker', 'GET', qs_input)
+  return hug_request('HUG', 'get_worker', 'GET', qs_input)
   .then(body => {
     if (body.valid_worker === true && body.valid_key === true) {
 
@@ -2240,7 +2218,7 @@ app.intent('Worker.One', conv => {
       }
 
     } else {
-      return catch_error(conv, `HUG Function failure!`);
+      return catch_error(conv, `HUG Function failure! get_worker`);
       // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
     }
   })
