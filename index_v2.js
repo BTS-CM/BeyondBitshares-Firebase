@@ -246,7 +246,7 @@ app.intent('Account.Balances', conv => {
             }
           }
         } else {
-          conv.close(`${input_account} does not have any assets in their account, goodbye.`);
+          return conv.close(`${input_account} does not have any assets in their account, goodbye.`);
           // TODO: Fallback to repeat account input instead of conv.close()
         }
       }
@@ -283,11 +283,11 @@ app.intent('Account.Balances', conv => {
         );
       }
     } else {
-      catch_error(conv, `HUG Function failure!`);
+      return catch_error(conv, `HUG Function failure!`);
     }
   })
   .catch(error_message => {
-    catch_error(conv, error_message);
+    return catch_error(conv, error_message);
   });
 })
 
@@ -362,11 +362,11 @@ app.intent('Account.CallPositions', conv => {
           text: displayText
         }));
       } else {
-        catch_error(conv, `HUG Function failure!`);
+        return catch_error(conv, `HUG Function failure!`);
       }
     })
   .catch(error_message => {
-    catch_error(conv, error_message);
+    return catch_error(conv, error_message);
   });
 })
 
@@ -415,11 +415,11 @@ app.intent('Account.Info', conv => {
       );
 
     } else {
-      catch_error(conv, `HUG Function failure!`);
+    return catch_error(conv, `HUG Function failure!`);
     }
   })
   .catch(error_message => {
-    catch_error(conv, error_message);
+    return catch_error(conv, error_message);
   });
 })
 
@@ -507,12 +507,12 @@ app.intent('Asset.One', conv => {
         text: displayText
       }))
     } else {
-      catch_error(conv, `HUG Function failure!`);
+      return catch_error(conv, `HUG Function failure!`);
       // TODO: Change to asset name fallback in future
     }
   })
   .catch(error_message => {
-    catch_error(conv, error_message);
+    return catch_error(conv, error_message);
   });
 })
 
@@ -615,12 +615,12 @@ app.intent('Block.Latest', conv => {
         );
       }
     } else {
-      catch_error(conv, `HUG Function failure!`);
+      return catch_error(conv, `HUG Function failure!`);
       // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
     }
   })
   .catch(error_message => {
-    catch_error(conv, error_message);
+    return catch_error(conv, error_message);
   });
 })
 
@@ -678,12 +678,12 @@ app.intent('Block.One', conv => {
           })
         );
       } else {
-        catch_error(conv, `HUG Function failure!`);
+        return catch_error(conv, `HUG Function failure!`);
         // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
       }
   })
   .catch(error_message => {
-    catch_error(conv, error_message);
+    return catch_error(conv, error_message);
   });
 })
 
@@ -739,12 +739,12 @@ app.intent('Block.Overview', conv => {
         )
 
       } else {
-        catch_error(conv, `HUG Function failure!`);
+        return catch_error(conv, `HUG Function failure!`);
         // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
       }
   })
   .catch(error_message => {
-    catch_error(conv, error_message);
+    return catch_error(conv, error_message);
   });
 })
 
@@ -830,34 +830,40 @@ app.intent('Committee.Active', conv => {
 
         const displayText = text;
 
-        conv.close(new SimpleResponse({
-          // Sending the details to the user
-          speech: textToSpeech,
-          text: displayText
-        }));
-
         const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
-        if (hasScreen === true) {
-          if (more_than_640 === true) {
-            conv.close(new BasicCard({
+        if (hasScreen === true && more_than_640 === true) {
+          return conv.close(
+            new SimpleResponse({
+              // Sending the details to the user
+              speech: textToSpeech,
+              text: displayText
+            }),
+            new BasicCard({
               title: `Insufficient space to display committee members!`,
               text: 'There are more Committee member to display! Please navigate to the linked block explorer.',
-
               buttons: new Button({
                 title: 'Committee info',
                 url: 'http://open-explorer.io/#/committee_members',
               }),
               display: 'WHITE'
-            }));
-          }
+            })
+          );
+        } else {
+          return conv.close(
+            new SimpleResponse({
+              // Sending the details to the user
+              speech: textToSpeech,
+              text: displayText
+            })
+          );
         }
       } else {
-        catch_error(conv, `HUG Function failure!`);
+        return catch_error(conv, `HUG Function failure!`);
         // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
       }
   })
   .catch(error_message => {
-    catch_error(conv, error_message);
+    return catch_error(conv, error_message);
   });
 })
 
@@ -871,20 +877,6 @@ app.intent('Committee.One', conv => {
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('get_committee_member', 1, parameter); // Need to set the data
   */
-
-  const request_options = {
-    url: `${hug_host}/get_committee_member`,
-    method: 'GET', // GET request, not POST.
-    json: true,
-    headers: {
-      'User-Agent': 'Beyond Bitshares Bot',
-      'Content-Type': 'application/json'
-    },
-    qs: { // qs instead of form - because this is a GET request
-      committee_id: input_committee_id, // input
-      api_key: '123abc'
-    }
-  };
 
   const qs_input = {
     //  HUG REST GET request parameters
@@ -924,19 +916,19 @@ app.intent('Committee.One', conv => {
           `They were registered by ${registrar}.` +
           `They currently have ${total_votes} votes, and are ${committee_status_string} active committee member.`;
 
-        conv.close(new SimpleResponse({
+        return conv.close(new SimpleResponse({
           // Sending the details to the user
           speech: textToSpeech,
           text: displayText
         }));
 
       } else {
-        catch_error(conv, `HUG Function failure!`);
+        return catch_error(conv, `HUG Function failure!`);
         // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
       }
   })
   .catch(error_message => {
-    catch_error(conv, error_message);
+    return catch_error(conv, error_message);
   });
 })
 
@@ -1011,53 +1003,43 @@ app.intent('Fees', conv => {
     const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
 
     if (hasScreen === true) {
-      try {
-        return conv.close(
-          // 2 simple responses & a card
-          new SimpleResponse({
-            speech: textToSpeech1,
-            text: displayText1
-          }),
-          new SimpleResponse({
-            speech: textToSpeech2,
-            text: displayText2
-          }),
-          new BasicCard({
-          title: `Additional info available regarding BTS fees!`,
-          text: 'Want more info on Bitshares network fees? Follow this link for more info! Remember that your elected committee members set these fees!',
-          buttons: new Button({
-            title: 'Block explorer link',
-            url: 'http://open-explorer.io/#/fees',
-          }),
-          display: 'WHITE'
-          })
-        );
-      } catch (err) {
-        // Catch unexpected changes to async handling
-        catch_error(conv, err);
-      }
+      return conv.close(
+        // 2 simple responses & a card
+        new SimpleResponse({
+          speech: textToSpeech1,
+          text: displayText1
+        }),
+        new SimpleResponse({
+          speech: textToSpeech2,
+          text: displayText2
+        }),
+        new BasicCard({
+        title: `Additional info available regarding BTS fees!`,
+        text: 'Want more info on Bitshares network fees? Follow this link for more info! Remember that your elected committee members set these fees!',
+        buttons: new Button({
+          title: 'Block explorer link',
+          url: 'http://open-explorer.io/#/fees',
+        }),
+        display: 'WHITE'
+        })
+      );
     } else {
-      try {
-        return conv.close(
-          // 2 simple responses
-          new SimpleResponse({
-            speech: textToSpeech1,
-            text: displayText1
-          }),
-          new SimpleResponse({
-            speech: textToSpeech2,
-            text: displayText2
-          })
-        );
-      } catch (err) {
-        // Catch unexpected changes to async handling
-        catch_error(conv, err);
-      }
+      return conv.close(
+        // 2 simple responses
+        new SimpleResponse({
+          speech: textToSpeech1,
+          text: displayText1
+        }),
+        new SimpleResponse({
+          speech: textToSpeech2,
+          text: displayText2
+        })
+      );
     }
   })
   .catch(error => {
     // Catch unexpected changes to async handling
-    catch_error(conv, err);
+    return catch_error(conv, err);
   });
 })
 
@@ -1155,28 +1137,36 @@ app.intent('Market.TopUIA', conv => {
       const displayText = `The top traded UIAs on Bitshares are as follows:\n` +
         inner_text;
 
-      conv.close(new SimpleResponse({
-        // No speech here, because we don't want to read everything out!
-        speech: textToSpeech,
-        text: displayText
-      }));
-
       const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
       if (hasScreen === true) {
-        conv.close(new BasicCard({
-          title: `Additional market information!`,
-          text: 'Want more info regarding top traded UIAs? Follow this link for more info!',
-
-          buttons: new Button({
-            title: 'Block explorer link',
-            url: 'http://open-explorer.io/#/markets',
+        return conv.close(
+          new SimpleResponse({
+            // No speech here, because we don't want to read everything out!
+            speech: textToSpeech,
+            text: displayText
           }),
-          display: 'WHITE'
-        }))
+          new BasicCard({
+            title: `Additional market information!`,
+            text: 'Want more info regarding top traded UIAs? Follow this link for more info!',
+            buttons: new Button({
+              title: 'Block explorer link',
+              url: 'http://open-explorer.io/#/markets',
+            }),
+            display: 'WHITE'
+          })
+        );
+      } else {
+        return conv.close(
+          new SimpleResponse({
+            // No speech here, because we don't want to read everything out!
+            speech: textToSpeech,
+            text: displayText
+          })
+        );
       }
 
     } else {
-      conv.close(new SimpleResponse({
+      return conv.close(new SimpleResponse({
         // Sending the details to the user
         speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
         text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
@@ -1231,28 +1221,36 @@ app.intent('Market.TopMPA', conv => {
       const displayText = `The top traded smartcoins on Bitshares are as follows:\n` +
         inner_text;
 
-      conv.close(new SimpleResponse({
-        // No speech here, because we don't want to read everything out!
-        speech: textToSpeech,
-        text: displayText
-      }));
-
       const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
       if (hasScreen === true) {
-        conv.close(new BasicCard({
-          title: `Additional market information!`,
-          text: 'Want more info regarding top traded UIAs? Follow this link for more info!',
-
-          buttons: new Button({
-            title: 'Block explorer link',
-            url: 'http://open-explorer.io/#/markets',
+        return conv.close(
+          new SimpleResponse({
+            // No speech here, because we don't want to read everything out!
+            speech: textToSpeech,
+            text: displayText
           }),
-          display: 'WHITE'
-        }))
-      }
+          new BasicCard({
+            title: `Additional market information!`,
+            text: 'Want more info regarding top traded UIAs? Follow this link for more info!',
 
+            buttons: new Button({
+              title: 'Block explorer link',
+              url: 'http://open-explorer.io/#/markets',
+            }),
+            display: 'WHITE'
+          })
+        );
+      } else {
+        return conv.close(
+          new SimpleResponse({
+            // No speech here, because we don't want to read everything out!
+            speech: textToSpeech,
+            text: displayText
+          })
+        );
+      }
     } else {
-      conv.close(new SimpleResponse({
+      return conv.close(new SimpleResponse({
         // Sending the details to the user
         speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
         text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
@@ -1299,8 +1297,6 @@ app.intent('Market.TopAll', conv => {
         }
       }
 
-
-
       const textToSpeech = `<speak>` +
         `The top markets on Bitshares are as follows:` +
         inner_voice +
@@ -1309,28 +1305,37 @@ app.intent('Market.TopAll', conv => {
       const displayText = `The top markets on Bitshares are as follows:\n` +
         inner_text;
 
-      conv.close(new SimpleResponse({
-        // No speech here, because we don't want to read everything out!
-        speech: textToSpeech,
-        text: displayText
-      }));
-
       const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
       if (hasScreen === true) {
-        conv.close(new BasicCard({
-          title: `Additional market information!`,
-          text: 'Want more info regarding top traded UIAs? Follow this link for more info!',
-
-          buttons: new Button({
-            title: 'Block explorer link',
-            url: 'http://open-explorer.io/#/markets',
+        return conv.close(
+          new SimpleResponse({
+            // No speech here, because we don't want to read everything out!
+            speech: textToSpeech,
+            text: displayText
           }),
-          display: 'WHITE'
-        }));
+          new BasicCard({
+            title: `Additional market information!`,
+            text: 'Want more info regarding top traded UIAs? Follow this link for more info!',
+
+            buttons: new Button({
+              title: 'Block explorer link',
+              url: 'http://open-explorer.io/#/markets',
+            }),
+            display: 'WHITE'
+          })
+        );
+      } else {
+        return conv.close(
+          new SimpleResponse({
+            // No speech here, because we don't want to read everything out!
+            speech: textToSpeech,
+            text: displayText
+          })
+        );
       }
 
     } else {
-      conv.close(new SimpleResponse({
+      return conv.close(new SimpleResponse({
         // Sending the details to the user
         speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
         text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
@@ -1372,33 +1377,42 @@ app.intent('Market.24HRVolume', conv => {
 
       const displayText = `${base_asset_amount} ${base_asset} were traded for ${quote_asset_amount} ${quote_asset} at an average rate of ${rate} ${trading_pair} within the last 24 hours.`;
 
-      conv.close(new SimpleResponse({
-        // No speech here, because we don't want to read everything out!
-        speech: textToSpeech,
-        text: displayText
-      }));
-
       const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
       if (hasScreen === true) {
-        conv.close(new BasicCard({
-          title: `Additional market information!`,
-          text: 'Want more info regarding top traded UIAs? Follow this link for more info!',
-
-          buttons: new Button({
-            title: 'Block explorer link',
-            url: 'http://open-explorer.io/#/markets',
+        return conv.close(
+          new SimpleResponse({
+            // No speech here, because we don't want to read everything out!
+            speech: textToSpeech,
+            text: displayText
           }),
-          display: 'WHITE'
-        }));
+          new BasicCard({
+            title: `Additional market information!`,
+            text: 'Want more info regarding top traded UIAs? Follow this link for more info!',
+
+            buttons: new Button({
+              title: 'Block explorer link',
+              url: 'http://open-explorer.io/#/markets',
+            }),
+            display: 'WHITE'
+          })
+        );
+      } else {
+        return conv.close(
+          new SimpleResponse({
+            // No speech here, because we don't want to read everything out!
+            speech: textToSpeech,
+            text: displayText
+          })
+        );
       }
 
     } else {
-      catch_error(conv, `HUG Function failure!`);
+      return catch_error(conv, `HUG Function failure!`);
       // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
     }
   })
   .catch(error_message => {
-    catch_error(conv, error_message);
+    return catch_error(conv, error_message);
   });
 })
 
@@ -1467,38 +1481,51 @@ app.intent('Market.Orderbook', conv => {
         `${buy_voice_inner}` +
         `</speak>`;
 
-      conv.close(new SimpleResponse({
-        // No speech here, because we don't want to read everything out!
-        speech: textToSpeech1,
-        text: displayText1
-      }));
-
-      conv.close(new SimpleResponse({
-        // No speech here, because we don't want to read everything out!
-        speech: textToSpeech2,
-        text: displayText2
-      }));
-
       const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
       if (hasScreen === true) {
-        conv.close(new BasicCard({
-          title: `Additional market open order information available!`,
-          text: 'Desire additional open order information? Follow this link for more info!!',
-          buttons: new Button({
-            title: 'Block explorer link',
-            url: `http://open-explorer.io/#/markets/${quote_asset}/${base_asset}`,
+        return conv.close(
+          new SimpleResponse({
+            // No speech here, because we don't want to read everything out!
+            speech: textToSpeech1,
+            text: displayText1
           }),
-          display: 'WHITE'
-        }));
+          new SimpleResponse({
+            // No speech here, because we don't want to read everything out!
+            speech: textToSpeech2,
+            text: displayText2
+          }),
+          new BasicCard({
+            title: `Additional market open order information available!`,
+            text: 'Desire additional open order information? Follow this link for more info!!',
+            buttons: new Button({
+              title: 'Block explorer link',
+              url: `http://open-explorer.io/#/markets/${quote_asset}/${base_asset}`,
+            }),
+            display: 'WHITE'
+          })
+        );
+      } else {
+        return conv.close(
+          new SimpleResponse({
+            // No speech here, because we don't want to read everything out!
+            speech: textToSpeech1,
+            text: displayText1
+          }),
+          new SimpleResponse({
+            // No speech here, because we don't want to read everything out!
+            speech: textToSpeech2,
+            text: displayText2
+          })
+        );
       }
 
     } else {
-      catch_error(conv, `HUG Function failure!`);
+      return catch_error(conv, `HUG Function failure!`);
       // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
     }
   })
   .catch(error_message => {
-    catch_error(conv, error_message);
+    return catch_error(conv, error_message);
   });
 })
 
@@ -1596,7 +1623,7 @@ app.intent('Market.Ticker', conv => {
         var base_asset = input_market_pair.split(":")[0];
         var quote_asset = input_market_pair.split(":")[1];
 
-        conv.close(
+        return conv.close(
           new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech,
@@ -1623,12 +1650,12 @@ app.intent('Market.Ticker', conv => {
       }
 
     } else {
-      catch_error(conv, `HUG Function failure!`);
+      return catch_error(conv, `HUG Function failure!`);
       // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
     }
   })
   .catch(error_message => {
-    catch_error(conv, error_message);
+    return catch_error(conv, error_message);
   });
 })
 
@@ -1689,41 +1716,55 @@ app.intent('Market.TradeHistory', conv => {
 
       const displayText1 = `The last 10 ${input_market_pair} market trades saw ${total_bought} ${base_asset} purchased and ${total_sold} ${quote_asset} sold with an avg rate of ${avg_rate}.`;
 
+      const textToSpeech2 = `You can find more info online!`;
       const displayText2 = `Last 10 market trades:\n` +
         `${trade_text}`;
 
-      conv.close(new SimpleResponse({
-        // No speech here, because we don't want to read everything out!
-        speech: textToSpeech1,
-        text: displayText1
-      }));
-
-      conv.close(new SimpleResponse({
-        // No speech here, because we don't want to read everything out!
-        speech: '',
-        text: displayText2
-      }));
-
       const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
       if (hasScreen === true) {
-        conv.close(new BasicCard({
-          title: `Additional market open order information available!`,
-          text: 'Desire additional open order information? Follow this link for more info!!',
-          buttons: new Button({
-            title: 'Block explorer link',
-            url: `http://open-explorer.io/#/markets/${quote_asset}/${base_asset}`,
+        return conv.close(
+          new SimpleResponse({
+            // No speech here, because we don't want to read everything out!
+            speech: textToSpeech1,
+            text: displayText1
           }),
-          display: 'WHITE'
-        }));
+          new SimpleResponse({
+            // No speech here, because we don't want to read everything out!
+            speech: textToSpeech2,
+            text: displayText2
+          }),
+          new BasicCard({
+            title: `Additional market open order information available!`,
+            text: 'Desire additional open order information? Follow this link for more info!!',
+            buttons: new Button({
+              title: 'Block explorer link',
+              url: `http://open-explorer.io/#/markets/${quote_asset}/${base_asset}`,
+            }),
+            display: 'WHITE'
+          })
+        );
+      } else {
+        return conv.close(
+          new SimpleResponse({
+            // No speech here, because we don't want to read everything out!
+            speech: textToSpeech1,
+            text: displayText1
+          }),
+          new SimpleResponse({
+            // No speech here, because we don't want to read everything out!
+            speech: '',
+            text: displayText2
+          })
+        );
       }
 
     } else {
-      catch_error(conv, `HUG Function failure!`);
+      return catch_error(conv, `HUG Function failure!`);
       // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
     }
   })
   .catch(error_message => {
-    catch_error(conv, error_message);
+    return catch_error(conv, error_message);
   });
 })
 
@@ -1819,12 +1860,6 @@ app.intent('Witness.Active', conv => {
       const displayText1 = `The following is a list of the ${num_active_witnesses} active witnesses:` +
         inner_text1;
 
-      conv.close(new SimpleResponse({
-        // No speech here, because we don't want to read everything out!
-        speech: textToSpeech1,
-        text: displayText1
-      }));
-
       var textToSpeech2 = ``;
       var displayText2 = ``;
 
@@ -1834,33 +1869,52 @@ app.intent('Witness.Active', conv => {
           `</speak>`;
 
         displayText2 = inner_text2;
-
-        conv.close(new SimpleResponse({
-          // No speech here, because we don't want to read everything out!
-          speech: textToSpeech2,
-          text: displayText2
-        }));
       }
 
       const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
       if (hasScreen === true) {
-        conv.close(new BasicCard({
-          title: `Additional witness information available!`,
-          text: 'Desire additional witness information? Follow this link for more info!',
-          buttons: new Button({
-            title: 'Block explorer link',
-            url: `http://open-explorer.io/#/witness`,
+        return conv.close(
+          new SimpleResponse({
+            // No speech here, because we don't want to read everything out!
+            speech: textToSpeech1,
+            text: displayText1
           }),
-          display: 'WHITE'
-        }));
+          new SimpleResponse({
+            // No speech here, because we don't want to read everything out!
+            speech: textToSpeech2,
+            text: displayText2
+          }),
+          new BasicCard({
+            title: `Additional witness information available!`,
+            text: 'Desire additional witness information? Follow this link for more info!',
+            buttons: new Button({
+              title: 'Block explorer link',
+              url: `http://open-explorer.io/#/witness`,
+            }),
+            display: 'WHITE'
+          })
+        );
+      } else {
+        return conv.close(
+          new SimpleResponse({
+            // No speech here, because we don't want to read everything out!
+            speech: textToSpeech1,
+            text: displayText1
+          }),
+          new SimpleResponse({
+            // No speech here, because we don't want to read everything out!
+            speech: textToSpeech2,
+            text: displayText2
+          })
+        );
       }
     } else {
-      catch_error(conv, `HUG Function failure!`);
+      return catch_error(conv, `HUG Function failure!`);
       // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
     }
   })
   .catch(error_message => {
-    catch_error(conv, error_message);
+    return catch_error(conv, error_message);
   });
 })
 
@@ -1923,32 +1977,41 @@ app.intent('Witness.One', conv => {
       if (url.length() > 1) {
         displayText1 += `URL: ${url}`;
       }
-
-      conv.close(new SimpleResponse({
-        // No speech here, because we don't want to read everything out!
-        speech: textToSpeech1,
-        text: displayText1
-      }));
-
+      
       const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
       if (hasScreen === true) {
-        conv.close(new BasicCard({
-          title: `Additional account information available!`,
-          text: `Desire additional account information about ${witness_name}? Follow this link for more info!`,
-          buttons: new Button({
-            title: 'Block explorer link',
-            url: `http://open-explorer.io/#/accounts/${witness_name}`
+        return conv.close(
+          new SimpleResponse({
+            // No speech here, because we don't want to read everything out!
+            speech: textToSpeech1,
+            text: displayText1
           }),
-          display: 'WHITE'
-        }));
+          new BasicCard({
+            title: `Additional account information available!`,
+            text: `Desire additional account information about ${witness_name}? Follow this link for more info!`,
+            buttons: new Button({
+              title: 'Block explorer link',
+              url: `http://open-explorer.io/#/accounts/${witness_name}`
+            }),
+            display: 'WHITE'
+          })
+        );
+      } else {
+        return conv.close(
+          new SimpleResponse({
+            // No speech here, because we don't want to read everything out!
+            speech: textToSpeech1,
+            text: displayText1
+          })
+        );
       }
     } else {
-      catch_error(conv, `HUG Function failure!`);
+      return catch_error(conv, `HUG Function failure!`);
       // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
     }
   })
   .catch(error_message => {
-    catch_error(conv, error_message);
+    return catch_error(conv, error_message);
   });
 })
 
@@ -2040,28 +2103,27 @@ app.intent('Worker.Many', conv => {
         `</speak>`;
       const displayText1 = text1;
 
-      conv.close(new SimpleResponse({
-        // Sending the details to the user
-        speech: textToSpeech1,
-        text: displayText1
-      }));
-
       if (text2.length() > 1) {
         const textToSpeech2 = `<speak>` +
           voice2 +
           `</speak>`;
         const displayText2 = text2;
-
-        conv.close(new SimpleResponse({
-          // Sending the details to the user
-          speech: textToSpeech2,
-          text: displayText2
-        }));
       }
 
       const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
       if (hasScreen === true) {
-        conv.close(new BasicCard({
+        return conv.close(
+          new SimpleResponse({
+            // Sending the details to the user
+            speech: textToSpeech1,
+            text: displayText1
+          }),
+          new SimpleResponse({
+            // Sending the details to the user
+            speech: textToSpeech2,
+            text: displayText2
+          }),
+          new BasicCard({
           title: `Additional worker proposal information is available!`,
           text: 'Desire additional worker proposal information? Follow this link for more info!',
           buttons: new Button({
@@ -2070,15 +2132,28 @@ app.intent('Worker.Many', conv => {
           }),
           display: 'WHITE'
         }));
+      } else {
+        return conv.close(
+          new SimpleResponse({
+            // Sending the details to the user
+            speech: textToSpeech1,
+            text: displayText1
+          }),
+          new SimpleResponse({
+            // Sending the details to the user
+            speech: textToSpeech2,
+            text: displayText2
+          })
+        );
       }
 
     } else {
-      catch_error(conv, `HUG Function failure!`);
+      return catch_error(conv, `HUG Function failure!`);
       // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
     }
   })
   .catch(error_message => {
-    catch_error(conv, error_message);
+    return catch_error(conv, error_message);
   });
 })
 
@@ -2129,32 +2204,41 @@ app.intent('Worker.One', conv => {
         `Total votes: ${total_votes}.` +
         `URL: ${url}`;
 
-      conv.close(new SimpleResponse({
-        // Sending the details to the user
-        speech: textToSpeech1,
-        text: displayText1
-      }));
-
       const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT')
       if (hasScreen === true) {
-        conv.close(new BasicCard({
-          title: `Additional worker proposal information is available!`,
-          text: 'Desire additional worker proposal information? Follow this link for more info!',
-          buttons: new Button({
-            title: 'Block explorer link',
-            url: `http://open-explorer.io/#/objects/${worker_id}`,
+        return conv.close(
+          new SimpleResponse({
+            // Sending the details to the user
+            speech: textToSpeech1,
+            text: displayText1
           }),
-          display: 'WHITE'
-        }));
+          new BasicCard({
+            title: `Additional worker proposal information is available!`,
+            text: 'Desire additional worker proposal information? Follow this link for more info!',
+            buttons: new Button({
+              title: 'Block explorer link',
+              url: `http://open-explorer.io/#/objects/${worker_id}`,
+            }),
+            display: 'WHITE'
+          })
+        );
+      } else {
+        return conv.close(
+          new SimpleResponse({
+            // Sending the details to the user
+            speech: textToSpeech1,
+            text: displayText1
+          })
+        );
       }
 
     } else {
-      catch_error(conv, `HUG Function failure!`);
+      return catch_error(conv, `HUG Function failure!`);
       // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
     }
   })
   .catch(error_message => {
-    catch_error(conv, error_message);
+    return catch_error(conv, error_message);
   });
 })
 
