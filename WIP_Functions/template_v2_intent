@@ -9,8 +9,8 @@ function catch_error(conv, error_message) {
   }
   return conv.close(new SimpleResponse({
     // If we somehow fail, do so gracefully!
-    speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
-    text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
+    speech: "An unexpected error was encountered! Let's end our Beyond Bitshares session for now.",
+    text: "An unexpected error was encountered! Let's end our Beyond Bitshares session for now."
   }));
 }
 

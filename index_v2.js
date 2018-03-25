@@ -13,6 +13,9 @@ const functions = require('firebase-functions'); // Mandatory when using firebas
 const http = require('https'); // Required for request's https use? Or dead code?...
 const requestLib = require('request'); // Used for querying the HUG.REST API
 const moment = require('moment'); // For handling time.
+var chatbase = require('@google/chatbase')
+              .setApiKey('API_KEY') // Your Chatbase API Key
+              .setPlatform('Google Assistant'); // The type of message you are sending to chatbase: user (user) or agent (bot)
 
 const app = dialogflow({
   debug: true
@@ -27,21 +30,65 @@ function catch_error(conv, error_message) {
   } else {
       console.error(new Error(error_message));
   }
-  return conv.close(new SimpleResponse({
-    // If we somehow fail, do so gracefully!
-    speech: "An unexpected error was encountered! Let's end our Vote Goat session for now.",
-    text: "An unexpected error was encountered! Let's end our Vote Goat session for now."
-  }));
+  return conv.close(
+      new SimpleResponse({
+      // If we somehow fail, do so gracefully!
+      speech: "An unexpected error was encountered! Let's end our Beyond Bitshares session for now.",
+      text: "An unexpected error was encountered! Let's end our Beyond Bitshares session for now."
+    })
+  );
 }
 
-function hug_request(api_host, target_function, method, qs_contents) {
+function chatbase_analytics(conv, input_message, input_intent, win_or_fail) {
+  /*
+  Integrating chatbase chat bot analytics.
+  Will help optimize user experience whilst minimizing privacy impact.
+  */
+  //const userId = conv.user.userID;
+  console.log(conv.user.userID);
+
+  const userId = 'TESTER1';
+
+  if (win_or_fail === 'Win') {
+    // For reporting successful bot interaction
+    chatbase.newMessage('API_KEY')
+    .setPlatform('Google Assistant')
+  	.setMessage(input_message)
+  	.setVersion('1.0')
+  	.setUserId(userId.toString())
+    .setAsTypeUser() // sets the message as type user
+    .setAsHandled() // set the message as handled -- this means the bot understood the message sent by the user
+    .setIntent(input_intent) // the intent of the sent message (does not have to be set for agent messages)
+    .setTimestamp(Date.now().toString()) // Only unix epochs with Millisecond precision
+  	.send()
+  	.then(msg => console.log(msg.getCreateResponse()))
+  	.catch(err => console.error(err));
+  } else {
+    // For reporting fallback attempts
+    chatbase.newMessage('API_KEY')
+    .setPlatform('Google Assistant')
+    .setMessage(input_message)
+    .setVersion('1.0')
+    .setUserId(userId.toString())
+    .setAsTypeAgent() // sets the message as type agent
+    .setAsNotHandled() // set the message as not handled -- this means the opposite of the preceding
+    .setIntent(input_intent) // the intent of the sent message (does not have to be set for agent messages)
+    .setTimestamp(Date.now().toString()) // Only unix epochs with Millisecond precision
+    .send()
+    .then(msg => console.log(msg.getCreateResponse()))
+    .catch(err => console.error(err));
+  }
+}
+
+
+function hug_request(target_url, target_function, method, qs_contents) {
   // Setting URL and headers for request
 
   var api_host = '';
   if (target_url === 'HUG') {
-    api_host = 'https://btsapi.grcnode.co.uk'; // Change this to your own HUG REST API server (if you want)
+    api_host = `https://btsapi.grcnode.co.uk`; // Change this to your own HUG REST API server (if you want)
   } else {
-    api_host = 'https://23.94.69.140:5000';
+    api_host = `https://23.94.69.140:5000`;
   }
 
   var request_options = {
@@ -62,6 +109,7 @@ function hug_request(api_host, target_function, method, qs_contents) {
         if (err) {
           // Returning an indication that the HUG REST query failed
           const error_message = err;
+          console.log(`Error - we didn't get a proper response! URL: ${url}`);
           reject(error_message);
         } else {
           if (resp.statusCode === 200) {
@@ -70,6 +118,7 @@ function hug_request(api_host, target_function, method, qs_contents) {
           } else {
             // Don't want anything other than 200
             const error_message = resp;
+            console.log("No error, but response != 200");
             reject(error_message);
           }
         }
@@ -108,6 +157,12 @@ app.intent('Welcome', conv => {
   if (hasScreen === true) {
     conv.ask(new Suggestions('About', 'Accounts', 'Assets', 'Blockchain', 'Committee', 'Markets', 'Network', 'Workers', 'Fees', 'Help', 'Quit'));
   }
+  chatbase_analytics(
+    conv,
+    'Welcome page', // input_message
+    'Welcome', // input_intent
+    'Win' // win_or_fail
+  );
 })
 
 app.intent('About', conv => {
@@ -163,6 +218,13 @@ app.intent('About', conv => {
   if (hasScreen === true) {
     conv.ask(new Suggestions('Delegated Proof-of-Stake Consensus', 'Price-Stable Cryptocurrencies', 'Decentralized Asset Exchange', 'Industrial Performance and Scalability', 'Dynamic Account Permissions', 'Recurring & Scheduled Payments', 'Referral Rewards Program', 'User-Issued Assets', 'Stakeholder-Approved Project Funding', 'Transferable Named Accounts', 'Help', 'Quit'));
   }
+
+  chatbase_analytics(
+    conv,
+    'About page', // input_message
+    'About', // input_intent
+    'Win' // win_or_fail
+  );
 })
 
 app.intent('Account', conv => {
@@ -214,49 +276,61 @@ app.intent('Account', conv => {
   if (hasScreen === true) {
     conv.ask(new Suggestions(`Account's Basic Overview`, 'Account Balances', `Account's Open Orders`, `Account's Trade History`, `Account's Call Positions`, 'Help', 'Quit'));
   }
+  chatbase_analytics(
+    conv,
+    'Account overview', // input_message
+    'Account', // input_intent
+    'Win' // win_or_fail
+  );
 })
 
 app.intent('Account.Balances', conv => {
   const input_account  = 'abit';
   const qs_input = {
     //  HUG REST GET request parameters
-    account: input_account, // input
+    account_name: input_account, // input
     api_key: '123abc'
   };
   return hug_request('HUG', 'account_balances', 'GET', qs_input)
   .then(body => {
-    if (body.valid_key === true) {
+    if (body.valid_account === true) {
       var text = ``;
       var voice = ``;
       var many_balances = false;
-      const account_balances = body.balances; // This var holds the account's balance array, retrieved from the HUG server.
 
-      if (Array.isArray(genres)) {
+      if (body.account_has_balances === true) {
+        const account_balances = body.balances; // This var holds the account's balance array, retrieved from the HUG server.
         const quantity_balances = account_balances.length;
-        if (quantity_balances > 0) { // More than one genre? Engage!
-          for (balance in account_balances) {
-            if (text.length < 640) {
-              asset_name = Object.keys(balance)[0];
+        var balance_iterator = 0;
 
-              if (index !== (account_balances.length - 1)) {
-                text += `${asset_name}: ${balance} \n`;
-              } else {
-                // Final line
-                text += `${asset_name}: ${balance}`;
-              }
-              voice += `${balance} ${asset_name}'s`;
+        for (var balance in account_balances) {
+          if (text.length < 640) {
+            balance_iterator = balance_iterator + 1; // Iterate
+            var asset_name = Object.keys(balance)[0];
 
+            if (balance_iterator !== (quantity_balances - 1)) {
+              text += `${asset_name}: ${balance} \n`; // New line
             } else {
-              // Can't go above 640 chars
-              // Could extend this to a second text/voice & simple response.
-              many_balances = true;
-              break;
+              // Final line
+              text += `${asset_name}: ${balance}`; // Final line
             }
+            voice += `${balance} ${asset_name}'s`;
+
+          } else {
+            // Can't go above 640 chars
+            // Could extend this to a second text/voice & simple response.
+            many_balances = true;
+            break;
           }
-        } else {
-          return conv.close(`${input_account} does not have any assets in their account, goodbye.`);
-          // TODO: Fallback to repeat account input instead of conv.close()
         }
+      } else {
+        chatbase_analytics(
+          conv,
+          'No account balances to display!', // input_message
+          'Account.Balances', // input_intent
+          'User fail' // win_or_fail
+        );
+        return conv.close(`${input_account} does not have any assets in their account, goodbye.`);
       }
 
       const textToSpeech = `<speak>` +
@@ -264,6 +338,13 @@ app.intent('Account.Balances', conv => {
         `</speak>`;
 
       const displayText = text;
+
+      chatbase_analytics(
+        conv,
+        'Successful interaction ', // input_message
+        'Account.Balances', // input_intent
+        'Win' // win_or_fail
+      );
 
       const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
       if (hasScreen === true && many_balances === true) {
@@ -291,10 +372,22 @@ app.intent('Account.Balances', conv => {
         );
       }
     } else {
-      return catch_error(conv, `HUG Function failure! account_balances`);
+      chatbase_analytics(
+        conv,
+        'Invalid Account ', // input_message
+        'Account.Balances', // input_intent
+        'User fail' // win_or_fail
+      );
+      return catch_error(conv, `Account not valid! account_balances`);
     }
   })
   .catch(error_message => {
+    chatbase_analytics(
+      conv,
+      'Error! Backend fail!', // input_message
+      'Account.Balances', // input_intent
+      'Backend fail' // win_or_fail
+    );
     return catch_error(conv, error_message);
   });
 })
@@ -323,38 +416,37 @@ app.intent('Account.CallPositions', conv => {
         var voice = ``;
 
         if (body.account_has_call_positions === true) {
-
           const call_positions = body.call_positions; // This var holds the account's call positions
+          const quantity_call_positions = call_positions.length;
+          if (quantity_call_positions > 0) {
+            var call_position_iterator = 0;
 
-          if (Array.isArray(call_positions)) {
-            const quantity_call_positions = call_positions.length;
-            if (quantity_call_positions > 0) {
-              for (call in call_positions) {
-                if (text.length < 640) {
-                  asset_name = Object.keys(call)[0];
-                  collateral = call.collateral; //collateral.<symbol|amount>
-                  debt = call.debt; //debt.<symbol|amount>
-                  call_price = call.call_price; //call_price.<base|quote>.<symbol|amount>
-                  ratio = call.ratio;
+            for (var call in call_positions) {
+              if (text.length < 640) {
+                call_position_iterator = call_position_iterator + 1;
+                asset_name = Object.keys(call)[0];
+                collateral = call.collateral; //collateral.<symbol|amount>
+                debt = call.debt; //debt.<symbol|amount>
+                call_price = call.call_price; //call_price.<base|quote>.<symbol|amount>
+                ratio = call.ratio;
 
-                  if (index !== (account_balances.length - 1)) {
-                    text += `${asset_name}: ${debt.amount}, collateral: ${collateral.amount} ${collateral.symbol}, ratio: ${ratio}.\n`;
-                  } else {
-                    // Final line
-                    text += `${asset_name}: ${debt.amount}, collateral: ${collateral.amount} ${collateral.symbol}, ratio: ${ratio}.`;
-                  }
-                  voice += `${debt.amount} ${asset_name} with a ratio of ${ratio}.`;
-
+                if (call_position_iterator !== (quantity_call_positions - 1)) {
+                  text += `${asset_name}: ${debt.amount}, collateral: ${collateral.amount} ${collateral.symbol}, ratio: ${ratio}.\n`;
                 } else {
-                  // Can't go above 640 chars
-                  // Could extend this to a second text/voice & simple response.
-                  break;
+                  // Final line
+                  text += `${asset_name}: ${debt.amount}, collateral: ${collateral.amount} ${collateral.symbol}, ratio: ${ratio}.`;
                 }
+                voice += `${debt.amount} ${asset_name} with a ratio of ${ratio}.`;
+
+              } else {
+                // Can't go above 640 chars
+                // Could extend this to a second text/voice & simple response.
+                break;
               }
-            } else {
-              return conv.close(`${input_account} does not have any call positions.`);
-              // TODO: Fallback to repeat account input instead of conv.close()
             }
+          } else {
+            return conv.close(`${input_account} does not have any call positions.`);
+            // TODO: Fallback to repeat account input instead of conv.close()
           }
         }
 
@@ -364,6 +456,13 @@ app.intent('Account.CallPositions', conv => {
           `</speak>`;
 
         const displayText = `${input_account}'s call positions are:` + voice;
+
+        chatbase_analytics(
+          conv,
+          'Successfully displayed account call positions!', // input_message
+          'Account.CallPositions', // input_intent
+          'Win' // win_or_fail
+        );
 
         return conv.close(new SimpleResponse({
           // Sending the details to the user & closing app.
@@ -375,6 +474,12 @@ app.intent('Account.CallPositions', conv => {
       }
     })
   .catch(error_message => {
+    chatbase_analytics(
+      conv,
+      'Error! Backend fail!', // input_message
+      'Account.CallPositions', // input_intent
+      'Backend fail' // win_or_fail
+    );
     return catch_error(conv, error_message);
   });
 })
@@ -398,7 +503,7 @@ app.intent('Account.Info', conv => {
   };
   return hug_request('HUG', 'account_info', 'GET', qs_input)
   .then(body => {
-    if (body.valid_key === true) {
+    if (body.valid_key === true) { // NEED TO CHANGE TO CHECKING ACCOUNT VALIDITY, NOT KEY!
 
       const info = body.account_info; // This var holds the account's call positions
       const id = info.id;
@@ -415,6 +520,13 @@ app.intent('Account.Info', conv => {
       const displayText = `Found information regarding ${input_account}:` +
         `${name}'s ID is ${id}, they were registered by ${registrar} and have voted for ${witness_votes} witnesses and ${committee_votes} committee members.`;
 
+      chatbase_analytics(
+        conv,
+        'Successfully displayed account information!', // input_message
+        'Account.Info', // input_intent
+        'Win' // win_or_fail
+      );
+
       return conv.close(
         new SimpleResponse({
           // Sending the details to the user & closing app.
@@ -428,6 +540,12 @@ app.intent('Account.Info', conv => {
     }
   })
   .catch(error_message => {
+    chatbase_analytics(
+      conv,
+      'Error! Backend fail!', // input_message
+      'Account.Info', // input_intent
+      'Backend fail' // win_or_fail
+    );
     return catch_error(conv, error_message);
   });
 })
@@ -455,6 +573,13 @@ app.intent('Asset', conv => {
     `Top Smartcoins.` +
     `Top User Issued Assets.` +
     `What do you want to know about Bitshares assets?`;
+
+  chatbase_analytics(
+    conv,
+    'Successfully displayed asset overview!', // input_message
+    'Asset', // input_intent
+    'Win' // win_or_fail
+  );
 
   conv.ask(new SimpleResponse({
     // Sending the details to the user
@@ -487,7 +612,7 @@ app.intent('Asset.One', conv => {
   };
   return hug_request('HUG', 'get_asset', 'GET', qs_input)
   .then(body => {
-    if (body.valid_key === true) {
+    if (body.valid_key === true) { // Change to checking validity of asset, not key!
 
       asset_data = body.asset_data;
 
@@ -511,6 +636,13 @@ app.intent('Asset.One', conv => {
         `Accumulated Fees: ${asset_data['dynamic_asset_data']['accumulated_fees']}` +
         `Fee pool: ${asset_data['dynamic_asset_data']['fee_pool']}`;
 
+      chatbase_analytics(
+        conv,
+        'Successfully displayed a single assets information!', // input_message
+        'Asset.One', // input_intent
+        'Win' // win_or_fail
+      );
+
       return conv.close(new SimpleResponse({
         // Sending the details to the user & closing app.
         speech: textToSpeech,
@@ -522,6 +654,12 @@ app.intent('Asset.One', conv => {
     }
   })
   .catch(error_message => {
+    chatbase_analytics(
+      conv,
+      'Error! Backend fail!', // input_message
+      'Asset.One', // input_intent
+      'Backend fail' // win_or_fail
+    );
     return catch_error(conv, error_message);
   });
 })
@@ -630,6 +768,12 @@ app.intent('Block.Latest', conv => {
     }
   })
   .catch(error_message => {
+    chatbase_analytics(
+      conv,
+      'Error! Backend fail!', // input_message
+      'Block.Latest', // input_intent
+      'Backend fail' // win_or_fail
+    );
     return catch_error(conv, error_message);
   });
 })
@@ -694,6 +838,12 @@ app.intent('Block.One', conv => {
       }
   })
   .catch(error_message => {
+    chatbase_analytics(
+      conv,
+      'Error! Backend fail!', // input_message
+      'Block.One', // input_intent
+      'Backend fail' // win_or_fail
+    );
     return catch_error(conv, error_message);
   });
 })
@@ -755,6 +905,12 @@ app.intent('Block.Overview', conv => {
       }
   })
   .catch(error_message => {
+    chatbase_analytics(
+      conv,
+      'Error! Backend fail!', // input_message
+      'Block.Overview', // input_intent
+      'Backend fail' // win_or_fail
+    );
     return catch_error(conv, error_message);
   });
 })
@@ -876,6 +1032,12 @@ app.intent('Committee.Active', conv => {
       }
   })
   .catch(error_message => {
+    chatbase_analytics(
+      conv,
+      'Error! Backend fail!', // input_message
+      'Committee.Active', // input_intent
+      'Backend fail' // win_or_fail
+    );
     return catch_error(conv, error_message);
   });
 })
@@ -941,6 +1103,12 @@ app.intent('Committee.One', conv => {
       }
   })
   .catch(error_message => {
+    chatbase_analytics(
+      conv,
+      'Error! Backend fail!', // input_message
+      'Committee.One', // input_intent
+      'Backend fail' // win_or_fail
+    );
     return catch_error(conv, error_message);
   });
 })
@@ -1127,7 +1295,7 @@ app.intent('Market.TopUIA', conv => {
       var inner_text = ``;
 
       var iterator = 1;
-      for (uia in top_uias) {
+      for (var uia in top_uias) {
         if (inner_text < 640) {
           inner_voice += `<say-as interpret-as="ordinal">${iterator}</say-as>: ${uia[0]} with ${uia[1]} trading volume.`;
           inner_text += `${uia[0]}: ${uia[1]}.\n`;
@@ -1202,7 +1370,7 @@ app.intent('Market.TopMPA', conv => {
     var inner_text = ``;
 
     var iterator = 1;
-    for (smartcoin in top_smartcoins) {
+    for (var smartcoin in top_smartcoins) {
       if (inner_text < 640) {
         inner_voice += `<say-as interpret-as="ordinal">${iterator}</say-as>: ${smartcoin[0]} with ${smartcoin[1]} trading volume.`;
         inner_text += `${smartcoin[0]}: ${smartcoin[1]}.\n`;
@@ -1276,7 +1444,7 @@ app.intent('Market.TopAll', conv => {
     var inner_text = ``;
 
     var iterator = 1;
-    for (market in top_markets) {
+    for (var market in top_markets) {
       if (inner_text < 640) {
         inner_voice += `<say-as interpret-as="ordinal">${iterator}</say-as>: The ${market[0]} trading pair with ${market[1]} trading volume.`;
         inner_text += `${market[0]} trading pair with ${market[1]} trading volume.\n`;
@@ -1396,6 +1564,12 @@ app.intent('Market.24HRVolume', conv => {
     }
   })
   .catch(error_message => {
+    chatbase_analytics(
+      conv,
+      'Error! Backend fail!', // input_message
+      'Market.24HRVolume', // input_intent
+      'Backend fail' // win_or_fail
+    );
     return catch_error(conv, error_message);
   });
 })
@@ -1433,7 +1607,7 @@ app.intent('Market.Orderbook', conv => {
       var sell_text = `Sell orders: \n`;
       var buy_text = `Buy orders: \n`;
 
-      for (i = 0; i < orderbook_limit; i++) {
+      for (var i = 0; i < orderbook_limit; i++) {
         if (sell_text.length < 640 || buy_text.length < 640) {
           current_sell = market_sell_orders[i.toString()]
           current_sell_quote = current_sell['quote'];
@@ -1509,6 +1683,12 @@ app.intent('Market.Orderbook', conv => {
     }
   })
   .catch(error_message => {
+    chatbase_analytics(
+      conv,
+      'Error! Backend fail!', // input_message
+      'Market.Orderbook', // input_intent
+      'Backend fail' // win_or_fail
+    );
     return catch_error(conv, error_message);
   });
 })
@@ -1639,6 +1819,12 @@ app.intent('Market.Ticker', conv => {
     }
   })
   .catch(error_message => {
+    chatbase_analytics(
+      conv,
+      'Error! Backend fail!', // input_message
+      'Market.Ticker', // input_intent
+      'Backend fail' // win_or_fail
+    );
     return catch_error(conv, error_message);
   });
 })
@@ -1671,9 +1857,9 @@ app.intent('Market.TradeHistory', conv => {
       var total_bought = 0;
       var total_sold = 0;
 
-      for (i = 0; i < mth_limit; i++) {
+      for (var i = 0; i < mth_limit; i++) {
         if (trade_text.length < 640) {
-          const current_trade = mth_limit[i.toString()]
+          const current_trade = market_trade_history[i.toString()]
           const bought = current_trade['bought'];
           const sold = current_trade['sold'];
           const rate = current_trade['rate'];
@@ -1748,6 +1934,12 @@ app.intent('Market.TradeHistory', conv => {
     }
   })
   .catch(error_message => {
+    chatbase_analytics(
+      conv,
+      'Error! Backend fail!', // input_message
+      'Market.TradeHistory', // input_intent
+      'Backend fail' // win_or_fail
+    );
     return catch_error(conv, error_message);
   });
 })
@@ -1803,7 +1995,7 @@ app.intent('Witness.Active', conv => {
       var inner_text1 = ``;
       var inner_voice1 = ``;
 
-      for (witness in witnesses) {
+      for (var witness in witnesses) {
         if (witness['witness_status'] === true) {
           // Active witness!
           const account_data = witness['witness_account_Data'];
@@ -1898,6 +2090,12 @@ app.intent('Witness.Active', conv => {
     }
   })
   .catch(error_message => {
+    chatbase_analytics(
+      conv,
+      'Error! Backend fail!', // input_message
+      'Witness.Active', // input_intent
+      'Backend fail' // win_or_fail
+    );
     return catch_error(conv, error_message);
   });
 })
@@ -1995,6 +2193,12 @@ app.intent('Witness.One', conv => {
     }
   })
   .catch(error_message => {
+    chatbase_analytics(
+      conv,
+      'Error! Backend fail!', // input_message
+      'Witness.One', // input_intent
+      'Backend fail' // win_or_fail
+    );
     return catch_error(conv, error_message);
   });
 })
@@ -2053,7 +2257,7 @@ app.intent('Worker.Many', conv => {
       var text2 = ``;
       var voice2 = ``;
 
-      for (worker in workers) {
+      for (var worker in workers) {
         // current_time >= moment(worker['worker_begin_date'])   // Removed this, since a worker proposal could be in the future
         const worker_begin_date = worker['worker_begin_date'];
         const worker_end_date = worker['worker_end_date'];
@@ -2137,6 +2341,12 @@ app.intent('Worker.Many', conv => {
     }
   })
   .catch(error_message => {
+    chatbase_analytics(
+      conv,
+      'Error! Backend fail!', // input_message
+      'Worker.Many', // input_intent
+      'Backend fail' // win_or_fail
+    );
     return catch_error(conv, error_message);
   });
 })
@@ -2223,6 +2433,12 @@ app.intent('Worker.One', conv => {
     }
   })
   .catch(error_message => {
+    chatbase_analytics(
+      conv,
+      'Error! Backend fail!', // input_message
+      'Worker.One', // input_intent
+      'Backend fail' // win_or_fail
+    );
     return catch_error(conv, error_message);
   });
 })
@@ -2367,11 +2583,11 @@ app.intent('goodbye', conv => {
   /*
   Elaborate goodbye intent
   */
-  textToSpeech = `<speak>` +
+  const textToSpeech = `<speak>` +
     `Sorry to see you go, come back soon? <break time="0.35s" /> ` +
     `Goodbye.` +
     `</speak>`;
-  speechToText = `Sorry to see you go, come back soon? \n\n` +
+  const speechToText = `Sorry to see you go, come back soon? \n\n` +
     `Goodbye.`;
 
   conv.close(new SimpleResponse({
