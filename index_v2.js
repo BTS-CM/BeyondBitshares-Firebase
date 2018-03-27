@@ -136,7 +136,7 @@ function hug_request(target_url, target_function, method, qs_contents) {
         if (err) {
           // Returning an indication that the HUG REST query failed
           const error_message = err;
-          console.log(`Error - we didn't get a proper response! URL: ${url}`);
+          console.log(`Error - we didn't get a proper response! URL: ${api_host}/${target_function}`);
           reject(error_message);
         } else {
           if (resp.statusCode === 200) {
@@ -1652,8 +1652,8 @@ app.intent('Market.24HRVolume', conv => {
     if (body.valid_market === true) {
 
       const market_volume_24hr = body.market_volume_24hr;
-      var base_asset = input_trading_pair.split("")[0];
-      var quote_asset = input_trading_pair.split("")[1];
+      var base_asset = input_market_pair.split("")[0];
+      var quote_asset = input_market_pair.split("")[1];
       var base_asset_amount = market_volume_24hr[base_asset]['amount'];
       var quote_asset_amount = market_volume_24hr[quote_asset]['amount'];
       var rate = base_asset_amount / quote_asset_amount;
