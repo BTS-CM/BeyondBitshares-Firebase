@@ -27,7 +27,7 @@ function catch_error(conv, error_message, intent) {
   */
   chatbase_analytics(
     conv,
-    'Error within intent ${intent}', // input_message
+    `Error within intent ${intent}`, // input_message
     intent, // input_intent
     'error' // win_or_fail
   );
@@ -53,7 +53,7 @@ function invalid_input(conv, intent_name) {
   */
   chatbase_analytics(
     conv,
-    'User input invalid data within intent ${intent_name}', // input_message
+    `User input invalid data within intent ${intent_name}`, // input_message
     intent_name, // input_intent
     'fail' // win_or_fail
   );
@@ -274,7 +274,7 @@ app.intent('Account', conv => {
   conv.contexts.set('account', 1, parameter); // Need to set the data
 
   const textToSpeech1 = `<speak>` +
-    `What account information do you want? You can ask for a general account overview or request specific information such as an user's balances, open orders, call positions, their recent trade history and life time membership verification"`
+    `What account information do you want? You can ask for a general account overview or request specific information such as an user's balances, open orders, call positions, their recent trade history and life time membership verification"` +
     `</speak>`;
 
   const displayText1 = `What account information do you want? You can ask for a general account overview or request specific information such as an user's balances, open orders, call positions, their recent trade history and life time membership verification"`;
@@ -327,18 +327,19 @@ app.intent('Account.Balances', conv => {
         var balance_iterator = 0;
 
         for (var balance in account_balances) {
-          if (text.length < 640) {
-            balance_iterator = balance_iterator + 1; // Iterate
-            var asset_name = Object.keys(balance)[0];
+          if (text.length < 640) { // This won't work! It could be 639, then we add more balances causing an invalid output
+            if (parseInt(balance) > 1) {
+              balance_iterator = balance_iterator + 1; // Iterate
+              var asset_name = Object.keys(balance)[0];
 
-            if (balance_iterator !== (quantity_balances - 1)) {
-              text += `${asset_name}: ${balance} \n`; // New line
-            } else {
-              // Final line
-              text += `${asset_name}: ${balance}`; // Final line
+              if (balance_iterator !== (quantity_balances - 1)) {
+                text += `${asset_name}: ${balance} \n`; // New line
+              } else {
+                // Final line
+                text += `${asset_name}: ${balance}`; // Final line
+              }
+              voice += `${balance} ${asset_name}'s`;
             }
-            voice += `${balance} ${asset_name}'s`;
-
           } else {
             // Can't go above 640 chars
             // Could extend this to a second text/voice & simple response.
@@ -362,6 +363,12 @@ app.intent('Account.Balances', conv => {
 
       const displayText = text;
 
+      const textToSpeech2 = `<speak>` +
+        `Do you require any other Bitshares information?` +
+        `</speak>`;
+
+      const displayText2 = `Do you require any other Bitshares information?`;
+
       chatbase_analytics(
         conv,
         'Successful interaction ', // input_message
@@ -371,10 +378,14 @@ app.intent('Account.Balances', conv => {
 
       const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
       if (hasScreen === true && many_balances === true) {
-        return conv.close(
+        return conv.ask(
           new SimpleResponse({
             speech: textToSpeech,
             text: displayText
+          }),
+          new SimpleResponse({
+            speech: textToSpeech2,
+            text: displayText2
           }),
           new BasicCard({
             title: `Insufficient space to display ${input_account}'s balances!'`,
@@ -384,13 +395,18 @@ app.intent('Account.Balances', conv => {
               url: `http://open-explorer.io/#/accounts/${input_account}`,
             }),
             display: 'WHITE'
-          })
+          }),
+          new Suggestions('About', 'Accounts', 'Assets', 'Blockchain', 'Committee', 'Markets', 'Network', 'Workers', 'Fees', 'Help', 'Quit')
         );
       } else {
-        return conv.close(
+        return conv.ask(
           new SimpleResponse({
             speech: textToSpeech,
             text: displayText
+          }),
+          new SimpleResponse({
+            speech: textToSpeech2,
+            text: displayText2
           })
         );
       }
@@ -407,11 +423,10 @@ app.intent('Account.CallPositions', conv => {
   /*
     account_CallPositions function
   */
-  //conv.fallbackCount = 0; // Required for tracking fallback attempts!
-
-  //const parameter = {}; // The dict which will hold our parameter data
-  //parameter['placeholder'] = 'placeholder'; // We need this placeholder
-  //conv.contexts.set('account_CallPositions', 1, parameter); // Need to set the data
+  conv.fallbackCount = 0; // Required for tracking fallback attempts!
+  const parameter = {}; // The dict which will hold our parameter data
+  parameter['placeholder'] = 'placeholder'; // We need this placeholder
+  conv.contexts.set('account_CallPositions', 1, parameter); // Need to set the data
 
   // input_account = <Retrieve Account from DialogFlow>
   const input_account  = 'abit';
@@ -422,49 +437,60 @@ app.intent('Account.CallPositions', conv => {
   };
   return hug_request('HUG', 'get_callpositions', 'GET', qs_input)
   .then(body => {
-    if (body.valid_key === true) {
+    if (body.valid_account === true) {
         var text = ``;
         var voice = ``;
 
         if (body.account_has_call_positions === true) {
           const call_positions = body.call_positions; // This var holds the account's call positions
           const quantity_call_positions = call_positions.length;
-          if (quantity_call_positions > 0) {
-            var call_position_iterator = 0;
+          var call_position_iterator = 0;
 
-            for (var call in call_positions) {
-              if (text.length < 640) {
-                call_position_iterator = call_position_iterator + 1;
-                asset_name = Object.keys(call)[0];
-                collateral = call.collateral; //collateral.<symbol|amount>
-                debt = call.debt; //debt.<symbol|amount>
-                call_price = call.call_price; //call_price.<base|quote>.<symbol|amount>
-                ratio = call.ratio;
+          for (var call in call_positions) {
+            if (text.length < 640) { // Insufficient check against going over the max character limit (639 would pass)
+              call_position_iterator = call_position_iterator + 1;
+              asset_name = Object.keys(call)[0];
+              collateral = call.collateral; //collateral.<symbol|amount>
+              debt = call.debt; //debt.<symbol|amount>
+              call_price = call.call_price; //call_price.<base|quote>.<symbol|amount>
+              ratio = call.ratio;
 
-                if (call_position_iterator !== (quantity_call_positions - 1)) {
-                  text += `${asset_name}: ${debt.amount}, collateral: ${collateral.amount} ${collateral.symbol}, ratio: ${ratio}.\n`;
-                } else {
-                  // Final line
-                  text += `${asset_name}: ${debt.amount}, collateral: ${collateral.amount} ${collateral.symbol}, ratio: ${ratio}.`;
-                }
-                voice += `${debt.amount} ${asset_name} with a ratio of ${ratio}.`;
-
+              if (call_position_iterator !== (quantity_call_positions - 1)) {
+                text += `${asset_name}: ${debt.amount}, collateral: ${collateral.amount} ${collateral.symbol}, ratio: ${ratio}.\n`;
               } else {
-                // Can't go above 640 chars
-                // Could extend this to a second text/voice & simple response.
-                break;
+                // Final line
+                text += `${asset_name}: ${debt.amount}, collateral: ${collateral.amount} ${collateral.symbol}, ratio: ${ratio}.`;
               }
+              voice += `${debt.amount} ${asset_name} with a ratio of ${ratio}.`;
+
+            } else {
+              // Can't go above 640 chars
+              // Could extend this to a second text/voice & simple response.
+              break;
             }
-          } else {
-            return conv.close(`${input_account} does not have any call positions.`);
-            // TODO: Fallback to repeat account input instead of conv.close()
           }
-        }
+        } else {
+          if (hasScreen === true) {
+            conv.ask(new Suggestions('About', 'Accounts', 'Assets', 'Blockchain', 'Committee', 'Markets', 'Network', 'Workers', 'Fees', 'Help', 'Quit'));
+          }
+          return conv.ask(
+            new SimpleResponse({
+              // Sending the details to the user & closing app.
+              speech: `<speak>You asked for ${input_account}'s call positions, however they don't have any call positions.</speak>`,
+              text: `You asked for ${input_account}'s call positions, however they don't have any call positions.`
+            }),
+            new SimpleResponse({
+              // Sending the details to the user & closing app.
+              speech: `<speak>Do you require any other Bitshares information?</speak>`,
+              text: `Do you require any other Bitshares information?`
+            })
+          );
+      }
 
         const textToSpeech = `<speak>` +
-          `${input_account}'s call positions are:`
-        voice +
-          `</speak>`;
+                                `${input_account}'s call positions are:`
+                                voice +
+                              `</speak>`;
 
         const displayText = `${input_account}'s call positions are:` + voice;
 
@@ -475,11 +501,18 @@ app.intent('Account.CallPositions', conv => {
           'Win' // win_or_fail
         );
 
-        return conv.close(new SimpleResponse({
-          // Sending the details to the user & closing app.
-          speech: textToSpeech,
-          text: displayText
-        }));
+        return conv.ask(
+          new SimpleResponse({
+            // Sending the details to the user & closing app.
+            speech: textToSpeech,
+            text: displayText
+          }),
+          new SimpleResponse({
+            // Sending the details to the user & closing app.
+            speech: `<speak>Do you require any other Bitshares information?</speak>`,
+            text: `Do you require any other Bitshares information?`
+          })
+        );
       } else {
         return invalid_input(conv, `get_callpositions`);
       }
@@ -493,13 +526,11 @@ app.intent('Account.Info', conv => {
   /*
     account_Info function
   */
-  /*
   conv.fallbackCount = 0; // Required for tracking fallback attempts!
-
   const parameter = {}; // The dict which will hold our parameter data
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('account_Info', 1, parameter); // Need to set the data
-  */
+
   const input_account  = 'abit';
   const qs_input = {
     //  HUG REST GET request parameters
@@ -518,6 +549,7 @@ app.intent('Account.Info', conv => {
       const committee_votes = info.options.num_committee;
 
       const textToSpeech = `<speak>` +
+        `You asked for ${input_account}` +
         `Found information regarding ${input_account}:` +
         `${name}'s ID is ${id}, they were registered by ${registrar} and have voted for ${witness_votes} witnesses and ${committee_votes} committee members.` +
         `</speak>`;
@@ -532,11 +564,16 @@ app.intent('Account.Info', conv => {
         'Win' // win_or_fail
       );
 
-      return conv.close(
+      return conv.ask(
         new SimpleResponse({
           // Sending the details to the user & closing app.
           speech: textToSpeech,
           text: displayText
+        }),
+        new SimpleResponse({
+          // Sending the details to the user & closing app.
+          speech: `<speak>Do you require any other Bitshares information?</speak>`,
+          text: `Do you require any other Bitshares information?`
         })
       );
 
@@ -554,7 +591,6 @@ app.intent('Asset', conv => {
     asset function
   */
   conv.fallbackCount = 0; // Required for tracking fallback attempts!
-
   const parameter = {}; // The dict which will hold our parameter data
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('asset', 1, parameter); // Need to set the data
@@ -609,13 +645,11 @@ app.intent('Asset.One', conv => {
   /*
     get_Asset function
   */
-  /*
   conv.fallbackCount = 0; // Required for tracking fallback attempts!
-
   const parameter = {}; // The dict which will hold our parameter data
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('get_Asset', 1, parameter); // Need to set the data
-  */
+
   const input_asset_name  = 'USD';
   const qs_input = {
     //  HUG REST GET request parameters
@@ -655,11 +689,18 @@ app.intent('Asset.One', conv => {
         'Win' // win_or_fail
       );
 
-      return conv.close(new SimpleResponse({
-        // Sending the details to the user & closing app.
-        speech: textToSpeech,
-        text: displayText
-      }))
+      return conv.ask(
+        new SimpleResponse({
+          // Sending the details to the user & closing app.
+          speech: textToSpeech,
+          text: displayText
+        }),
+        new SimpleResponse({
+          // Sending the details to the user & closing app.
+          speech: `<speak>Do you require any other Bitshares information?</speak>`,
+          text: `Do you require any other Bitshares information?`
+        })
+      );
     } else {
       return invalid_input(conv, `get_asset`);
     }
@@ -674,7 +715,6 @@ app.intent('Block', conv => {
     block function
   */
   conv.fallbackCount = 0; // Required for tracking fallback attempts!
-
   const parameter = {}; // The dict which will hold our parameter data
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('block', 1, parameter); // Need to set the data
@@ -695,8 +735,8 @@ app.intent('Block', conv => {
 
   conv.ask(
     new SimpleResponse({
-      speech: textToSpeech1,
-      text: displayText1
+      speech: textToSpeech,
+      text: displayText
     }),
     new BasicCard({
       title: `Bitshares Blocks`,
@@ -706,6 +746,11 @@ app.intent('Block', conv => {
         url: `http://open-explorer.io/#/search`,
       }),
       display: 'WHITE'
+    }),
+    new SimpleResponse({
+      // Sending the details to the user & closing app.
+      speech: `<speak>Do you require any other Bitshares information?</speak>`,
+      text: `Do you require any other Bitshares information?`
     })
   );
 
@@ -726,12 +771,12 @@ app.intent('Block.Latest', conv => {
   /*
     block_Latest function
   */
-  /*
+
   conv.fallbackCount = 0; // Required for tracking fallback attempts!
   const parameter = {}; // The dict which will hold our parameter data
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('block_Latest', 1, parameter); // Need to set the data
-  */
+
   const qs_input = {
     //  HUG REST GET request parameters
     api_key: '123abc'
@@ -759,7 +804,7 @@ app.intent('Block.Latest', conv => {
 
     const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
     if (hasScreen === true) {
-      return conv.close(
+      return conv.ask(
         new SimpleResponse({
           // Sending the details to the user
           speech: textToSpeech,
@@ -773,14 +818,25 @@ app.intent('Block.Latest', conv => {
             url: `http://open-explorer.io/#/search`,
           }),
           display: 'WHITE'
-        })
+        }),
+        new SimpleResponse({
+          // Sending the details to the user & closing app.
+          speech: `<speak>Do you require any other Bitshares information?</speak>`,
+          text: `Do you require any other Bitshares information?`
+        }),
+        new Suggestions('About', 'Asset', 'Block', 'Committee', 'Fees', 'Market', 'Workers', 'Help', 'Quit')
       );
     } else {
-      return conv.close(
+      return conv.ask(
         new SimpleResponse({
           // Sending the details to the user
           speech: textToSpeech,
           text: displayText
+        }),
+        new SimpleResponse({
+          // Sending the details to the user & closing app.
+          speech: `<speak>Do you require any other Bitshares information?</speak>`,
+          text: `Do you require any other Bitshares information?`
         })
       );
     }
@@ -794,12 +850,12 @@ app.intent('Block.One', conv => {
   /*
     get_block_details function
   */
-  /*
+
   conv.fallbackCount = 0; // Required for tracking fallback attempts!
   const parameter = {}; // The dict which will hold our parameter data
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('get_block_details', 1, parameter); // Need to set the data
-  */
+
   var input_block_number = 500000;
   const qs_input = {
     //  HUG REST GET request parameters
@@ -828,7 +884,7 @@ app.intent('Block.One', conv => {
           `It was produced on ${timestamp} by witness with ID ${witness}.\n\n` +
           `There were ${tx_count} transactions in the block.`;
 
-        return conv.close(
+        return conv.ask(
           new SimpleResponse({
             // Sending the details to the user
             speech: textToSpeech,
@@ -842,6 +898,11 @@ app.intent('Block.One', conv => {
               url: `http://open-explorer.io/#/blocks/${block_number}`,
             }),
             display: 'WHITE'
+          }),
+          new SimpleResponse({
+            // Sending the details to the user & closing app.
+            speech: `<speak>Do you require any other Bitshares information?</speak>`,
+            text: `Do you require any other Bitshares information?`
           })
         );
       } else {
@@ -857,12 +918,11 @@ app.intent('Block.Overview', conv => {
   /*
     blockchain_Overview function
   */
-  /*
+
   conv.fallbackCount = 0; // Required for tracking fallback attempts!
   const parameter = {}; // The dict which will hold our parameter data
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('blockchain_Overview', 1, parameter); // Need to set the data
-  */
 
   const qs_input = {
     //  HUG REST GET request parameters
@@ -896,13 +956,18 @@ app.intent('Block.Overview', conv => {
           `recently_missed_count: ${chain_info['recently_missed_count']}.` +
           `last_irreversible_block_num: ${chain_info['last_irreversible_block_num']}.`;
 
-        return conv.close(
+        return conv.ask(
           new SimpleResponse({
             // Sending the details to the user
             speech: textToSpeech,
             text: displayText
+          }),
+          new SimpleResponse({
+            // Sending the details to the user & closing app.
+            speech: `<speak>Do you require any other Bitshares information?</speak>`,
+            text: `Do you require any other Bitshares information?`
           })
-        )
+        );
 
       } else {
         return invalid_input(conv, `chain_info`);
@@ -918,7 +983,6 @@ app.intent('Committee', conv => {
     committee function
   */
   conv.fallbackCount = 0; // Required for tracking fallback attempts!
-
   const parameter = {}; // The dict which will hold our parameter data
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('committee', 1, parameter); // Need to set the data
@@ -966,12 +1030,11 @@ app.intent('Committee.Active', conv => {
   /*
     committee_Active function
   */
-  /*
+
   conv.fallbackCount = 0; // Required for tracking fallback attempts!
   const parameter = {}; // The dict which will hold our parameter data
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('committee_Active', 1, parameter); // Need to set the data
-  */
 
   const qs_input = {
     //  HUG REST GET request parameters
@@ -1015,7 +1078,7 @@ app.intent('Committee.Active', conv => {
         const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
 
         if (hasScreen === true && more_than_640 === true) {
-          return conv.close(
+          return conv.ask(
             new SimpleResponse({
               // Sending the details to the user
               speech: textToSpeech,
@@ -1029,14 +1092,25 @@ app.intent('Committee.Active', conv => {
                 url: 'http://open-explorer.io/#/committee_members',
               }),
               display: 'WHITE'
-            })
+            }),
+            new SimpleResponse({
+              // Sending the details to the user & closing app.
+              speech: `<speak>Do you require any other Bitshares information?</speak>`,
+              text: `Do you require any other Bitshares information?`
+            }),
+            new Suggestions('About', 'Asset', 'Block', 'Committee', 'Fees', 'Market', 'Workers', 'Help', 'Quit')
           );
         } else {
-          return conv.close(
+          return conv.ask(
             new SimpleResponse({
               // Sending the details to the user
               speech: textToSpeech,
               text: displayText
+            }),
+            new SimpleResponse({
+              // Sending the details to the user & closing app.
+              speech: `<speak>Do you require any other Bitshares information?</speak>`,
+              text: `Do you require any other Bitshares information?`
             })
           );
         }
@@ -1053,12 +1127,12 @@ app.intent('Committee.One', conv => {
   /*
     get_committee_member function
   */
-  /*
+
   conv.fallbackCount = 0; // Required for tracking fallback attempts!
   const parameter = {}; // The dict which will hold our parameter data
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('get_committee_member', 1, parameter); // Need to set the data
-  */
+
   const input_committee_id = '1.5.15';
   const qs_input = {
     //  HUG REST GET request parameters
@@ -1098,11 +1172,18 @@ app.intent('Committee.One', conv => {
           `They were registered by ${registrar}.` +
           `They currently have ${total_votes} votes, and are ${committee_status_string} active committee member.`;
 
-        return conv.close(new SimpleResponse({
-          // Sending the details to the user
-          speech: textToSpeech,
-          text: displayText
-        }));
+        return conv.ask(
+          new SimpleResponse({
+            // Sending the details to the user
+            speech: textToSpeech,
+            text: displayText
+          }),
+          new SimpleResponse({
+            // Sending the details to the user & closing app.
+            speech: `<speak>Do you require any other Bitshares information?</speak>`,
+            text: `Do you require any other Bitshares information?`
+          })
+        );
 
       } else {
         return invalid_input(conv, `get_committee_member`);
@@ -1130,6 +1211,7 @@ app.intent('Fees', conv => {
       `Asset issuance: ${body.network_fees.asset_issue.fee}` +
       `Worker proposal creation ${body.network_fees.worker_create.fee}` +
       `</speak>`;
+
     const displayText1 =  `Market fees:\n` +
                           `Asset transfer: ${body.network_fees.transfer.fee}\n` +
                           `Limit order create: ${body.network_fees.limit_order_create.fee}\n` +
@@ -1155,9 +1237,12 @@ app.intent('Fees', conv => {
                           `Witness fees:\n` +
                           `Create: ${body.network_fees.witness_create.fee}\n` +
                           `Update: ${body.network_fees.witness_update.fee}`;
+
     const textToSpeech2 = `<speak>` +
       `These fees can be changed by the committee upon request by the community.` +
+      `Do you require any other Bitshares information?` +
       `</speak>`;
+
     const displayText2 = `Proposal fees:\n` +
                           `Create: ${body.network_fees.proposal_create.fee}\n` +
                           `Update: ${body.network_fees.proposal_update.fee}\n` +
@@ -1179,12 +1264,13 @@ app.intent('Fees', conv => {
                           `Override transfer: ${body.network_fees.override_transfer.fee}\n` +
                           `Transfer to blind: ${body.network_fees.transfer_to_blind.fee}\n` +
                           `Transfer from blind: ${body.network_fees.transfer_from_blind.fee}\n` +
-                          `Asset claim fees: ${body.network_fees.asset_claim_fees.fee}\n`;
+                          `Asset claim fees: ${body.network_fees.asset_claim_fees.fee}\n\n` +
+                          `Do you require any other Bitshares information?`;
 
     const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
 
     if (hasScreen === true) {
-      return conv.close(
+      return conv.ask(
         // 2 simple responses & a card
         new SimpleResponse({
           speech: textToSpeech1,
@@ -1202,10 +1288,11 @@ app.intent('Fees', conv => {
           url: 'http://open-explorer.io/#/fees',
         }),
         display: 'WHITE'
-        })
+        }),
+        new Suggestions('About', 'Asset', 'Block', 'Committee', 'Fees', 'Market', 'Workers', 'Help', 'Quit')
       );
     } else {
-      return conv.close(
+      return conv.ask(
         // 2 simple responses
         new SimpleResponse({
           speech: textToSpeech1,
@@ -1230,7 +1317,6 @@ app.intent('Market', conv => {
     market function
   */
   conv.fallbackCount = 0; // Required for tracking fallback attempts!
-
   const parameter = {}; // The dict which will hold our parameter data
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('market', 1, parameter); // Need to set the data
@@ -1280,7 +1366,7 @@ app.intent('Market', conv => {
 
   const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
   if (hasScreen === true) {
-    conv.ask(new Suggestions('Help', 'Quit'));
+    conv.ask(new Suggestions('About', 'Accounts', 'Assets', 'Blockchain', 'Committee', 'Markets', 'Network', 'Workers', 'Fees', 'Help', 'Quit'));
   }
 
   chatbase_analytics(
@@ -1296,12 +1382,11 @@ app.intent('Market.TopUIA', conv => {
     Most traded UIAs on the BTS DEX (of any type).
     https://github.com/oxarbitrage/bitshares-python-api-backend
   */
-  /*
+
   conv.fallbackCount = 0; // Required for tracking fallback attempts!
   const parameter = {}; // The dict which will hold our parameter data
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('top_markets', 1, parameter); // Need to set the data
-  */
 
   const qs_input = {
     // None needed
@@ -1333,7 +1418,7 @@ app.intent('Market.TopUIA', conv => {
 
       const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
       if (hasScreen === true) {
-        return conv.close(
+        return conv.ask(
           new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech,
@@ -1347,14 +1432,25 @@ app.intent('Market.TopUIA', conv => {
               url: 'http://open-explorer.io/#/markets',
             }),
             display: 'WHITE'
-          })
+          }),
+          new SimpleResponse({
+            // Sending the details to the user & closing app.
+            speech: `<speak>Do you require any other Bitshares information?</speak>`,
+            text: `Do you require any other Bitshares information?`
+          }),
+          new Suggestions('About', 'Asset', 'Block', 'Committee', 'Fees', 'Market', 'Workers', 'Help', 'Quit')
         );
       } else {
-        return conv.close(
+        return conv.ask(
           new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech,
             text: displayText
+          }),
+          new SimpleResponse({
+            // Sending the details to the user & closing app.
+            speech: `<speak>Do you require any other Bitshares information?</speak>`,
+            text: `Do you require any other Bitshares information?`
           })
         );
       }
@@ -1371,12 +1467,10 @@ app.intent('Market.TopMPA', conv => {
     Most traded smartcoins on the BTS DEX (of any type).
     https://github.com/oxarbitrage/bitshares-python-api-backend
   */
-  /*
   conv.fallbackCount = 0; // Required for tracking fallback attempts!
   const parameter = {}; // The dict which will hold our parameter data
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('top_markets', 1, parameter); // Need to set the data
-  */
 
   const qs_input = {
     // None needed
@@ -1408,7 +1502,7 @@ app.intent('Market.TopMPA', conv => {
 
     const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
     if (hasScreen === true) {
-      return conv.close(
+      return conv.ask(
         new SimpleResponse({
           // No speech here, because we don't want to read everything out!
           speech: textToSpeech,
@@ -1423,14 +1517,25 @@ app.intent('Market.TopMPA', conv => {
             url: 'http://open-explorer.io/#/markets',
           }),
           display: 'WHITE'
-        })
+        }),
+        new SimpleResponse({
+          // Sending the details to the user & closing app.
+          speech: `<speak>Do you require any other Bitshares information?</speak>`,
+          text: `Do you require any other Bitshares information?`
+        }),
+        new Suggestions('About', 'Asset', 'Block', 'Committee', 'Fees', 'Market', 'Workers', 'Help', 'Quit')
       );
     } else {
-      return conv.close(
+      return conv.ask(
         new SimpleResponse({
           // No speech here, because we don't want to read everything out!
           speech: textToSpeech,
           text: displayText
+        }),
+        new SimpleResponse({
+          // Sending the details to the user & closing app.
+          speech: `<speak>Do you require any other Bitshares information?</speak>`,
+          text: `Do you require any other Bitshares information?`
         })
       );
     }
@@ -1446,12 +1551,12 @@ app.intent('Market.TopAll', conv => {
     Most traded assets on the BTS DEX (of any type).
     https://github.com/oxarbitrage/bitshares-python-api-backend
   */
-  /*
+
   conv.fallbackCount = 0; // Required for tracking fallback attempts!
   const parameter = {}; // The dict which will hold our parameter data
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('top_markets', 1, parameter); // Need to set the data
-  */
+
   const qs_input = {
     // None needed
   };
@@ -1482,7 +1587,7 @@ app.intent('Market.TopAll', conv => {
 
     const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
     if (hasScreen === true) {
-      return conv.close(
+      return conv.ask(
         new SimpleResponse({
           // No speech here, because we don't want to read everything out!
           speech: textToSpeech,
@@ -1497,14 +1602,25 @@ app.intent('Market.TopAll', conv => {
             url: 'http://open-explorer.io/#/markets',
           }),
           display: 'WHITE'
-        })
+        }),
+        new SimpleResponse({
+          // Sending the details to the user & closing app.
+          speech: `<speak>Do you require any other Bitshares information?</speak>`,
+          text: `Do you require any other Bitshares information?`
+        }),
+        new Suggestions('About', 'Asset', 'Block', 'Committee', 'Fees', 'Market', 'Workers', 'Help', 'Quit')
       );
     } else {
-      return conv.close(
+      return conv.ask(
         new SimpleResponse({
           // No speech here, because we don't want to read everything out!
           speech: textToSpeech,
           text: displayText
+        }),
+        new SimpleResponse({
+          // Sending the details to the user & closing app.
+          speech: `<speak>Do you require any other Bitshares information?</speak>`,
+          text: `Do you require any other Bitshares information?`
         })
       );
     }
@@ -1519,12 +1635,12 @@ app.intent('Market.24HRVolume', conv => {
   /*
     market_24HRVolume function
   */
-  /*
+
   conv.fallbackCount = 0; // Required for tracking fallback attempts!
   const parameter = {}; // The dict which will hold our parameter data
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('market_24HRVolume', 1, parameter); // Need to set the data
-  */
+
   const input_market_pair = 'USD:BTS';
   const qs_input = {
     //  HUG REST GET request parameters
@@ -1550,7 +1666,7 @@ app.intent('Market.24HRVolume', conv => {
 
       const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
       if (hasScreen === true) {
-        return conv.close(
+        return conv.ask(
           new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech,
@@ -1565,14 +1681,25 @@ app.intent('Market.24HRVolume', conv => {
               url: 'http://open-explorer.io/#/markets',
             }),
             display: 'WHITE'
-          })
+          }),
+          new SimpleResponse({
+            // Sending the details to the user & closing app.
+            speech: `<speak>Do you require any other Bitshares information?</speak>`,
+            text: `Do you require any other Bitshares information?`
+          }),
+          new Suggestions('About', 'Asset', 'Block', 'Committee', 'Fees', 'Market', 'Workers', 'Help', 'Quit')
         );
       } else {
-        return conv.close(
+        return conv.ask(
           new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech,
             text: displayText
+          }),
+          new SimpleResponse({
+            // Sending the details to the user & closing app.
+            speech: `<speak>Do you require any other Bitshares information?</speak>`,
+            text: `Do you require any other Bitshares information?`
           })
         );
       }
@@ -1590,12 +1717,12 @@ app.intent('Market.Orderbook', conv => {
   /*
     market_Orderbook function
   */
-  /*
+
   conv.fallbackCount = 0; // Required for tracking fallback attempts!
   const parameter = {}; // The dict which will hold our parameter data
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('market_Orderbook', 1, parameter); // Need to set the data
-  */
+
   const input_market_pair = "USD:BTS"
 
   const qs_input = {
@@ -1653,7 +1780,7 @@ app.intent('Market.Orderbook', conv => {
 
       const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
       if (hasScreen === true) {
-        return conv.close(
+        return conv.ask(
           new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech1,
@@ -1672,10 +1799,11 @@ app.intent('Market.Orderbook', conv => {
               url: `http://open-explorer.io/#/markets/${quote_asset}/${base_asset}`,
             }),
             display: 'WHITE'
-          })
+          }),
+          new Suggestions('About', 'Asset', 'Block', 'Committee', 'Fees', 'Market', 'Workers', 'Help', 'Quit')
         );
       } else {
-        return conv.close(
+        return conv.ask(
           new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech1,
@@ -1702,12 +1830,12 @@ app.intent('Market.Ticker', conv => {
   /*
     market_Ticker function
   */
-  /*
+
   conv.fallbackCount = 0; // Required for tracking fallback attempts!
   const parameter = {}; // The dict which will hold our parameter data
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('market_Ticker', 1, parameter); // Need to set the data
-  */
+
   const input_market_pair = "USD:BTS"
 
   const qs_input = {
@@ -1751,6 +1879,7 @@ app.intent('Market.Ticker', conv => {
       const l_price = latest['price'];
 
       const textToSpeech = `<speak>` +
+        `Market ticker information for ${input_market_pair}` +
         `Core exchange rate price: ${cer_price}` +
         `Quote settlement price: ${qsp_price}` +
         `Base volume amount: ${baseVolume_amount}` +
@@ -1763,7 +1892,8 @@ app.intent('Market.Ticker', conv => {
         `Latest price: ${l_price}` +
         `</speak>`;
 
-      const displayText = `Core exchange rate:\n` +
+      const displayText = `Market ticker information for ${input_market_pair}` +
+        `Core exchange rate:\n` +
         `Base amount: ${cer_base_amount}\n` +
         `Quote amount: ${cer_quote_amount}\n` +
         `Price: ${cer_price}\n\n` +
@@ -1792,7 +1922,7 @@ app.intent('Market.Ticker', conv => {
         var base_asset = input_market_pair.split(":")[0];
         var quote_asset = input_market_pair.split(":")[1];
 
-        return conv.close(
+        return conv.ask(
           new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech,
@@ -1806,14 +1936,25 @@ app.intent('Market.Ticker', conv => {
               url: `http://open-explorer.io/#/markets/${quote_asset}/${base_asset}`,
             }),
             display: 'WHITE'
-          })
+          }),
+          new SimpleResponse({
+            // Sending the details to the user & closing app.
+            speech: `<speak>Do you require any other Bitshares information?</speak>`,
+            text: `Do you require any other Bitshares information?`
+          }),
+          new Suggestions('About', 'Asset', 'Block', 'Committee', 'Fees', 'Market', 'Workers', 'Help', 'Quit')
         );
       } else {
-        return conv.close(
+        return conv.ask(
           new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech,
             text: displayText
+          }),
+          new SimpleResponse({
+            // Sending the details to the user & closing app.
+            speech: `<speak>Do you require any other Bitshares information?</speak>`,
+            text: `Do you require any other Bitshares information?`
           })
         );
       }
@@ -1831,12 +1972,11 @@ app.intent('Market.TradeHistory', conv => {
   /*
     market_TradeHistory function
   */
-  /*
+
   conv.fallbackCount = 0; // Required for tracking fallback attempts!
   const parameter = {}; // The dict which will hold our parameter data
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('market_TradeHistory', 1, parameter); // Need to set the data
-  */
 
   const input_market_pair = "USD:BTS"
   const qs_input = {
@@ -1883,14 +2023,13 @@ app.intent('Market.TradeHistory', conv => {
         `</speak>`;
 
       const displayText1 = `The last 10 ${input_market_pair} market trades saw ${total_bought} ${base_asset} purchased and ${total_sold} ${quote_asset} sold with an avg rate of ${avg_rate}.`;
-
-      const textToSpeech2 = `You can find more info online!`;
+      const textToSpeech2 = `<speak>Do you require any other Bitshares information?</speak>`;
       const displayText2 = `Last 10 market trades:\n` +
         `${trade_text}`;
 
       const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
       if (hasScreen === true) {
-        return conv.close(
+        return conv.ask(
           new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech1,
@@ -1909,10 +2048,11 @@ app.intent('Market.TradeHistory', conv => {
               url: `http://open-explorer.io/#/markets/${quote_asset}/${base_asset}`,
             }),
             display: 'WHITE'
-          })
+          }),
+          new Suggestions('About', 'Asset', 'Block', 'Committee', 'Fees', 'Market', 'Workers', 'Help', 'Quit')
         );
       } else {
-        return conv.close(
+        return conv.ask(
           new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech1,
@@ -1940,7 +2080,6 @@ app.intent('Witness', conv => {
     witness function
   */
   conv.fallbackCount = 0; // Required for tracking fallback attempts!
-
   const parameter = {}; // The dict which will hold our parameter data
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('witness', 1, parameter); // Need to set the data
@@ -1985,12 +2124,11 @@ app.intent('Witness.Active', conv => {
   /*
     witness_Active function
   */
-  /*
   conv.fallbackCount = 0; // Required for tracking fallback attempts!
   const parameter = {}; // The dict which will hold our parameter data
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('witness_Active', 1, parameter); // Need to set the data
-  */
+
   const qs_input = {
     //  HUG REST GET request parameters
     api_key: '123abc'
@@ -2058,7 +2196,7 @@ app.intent('Witness.Active', conv => {
 
       const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
       if (hasScreen === true) {
-        return conv.close(
+        return conv.ask(
           new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech1,
@@ -2077,10 +2215,11 @@ app.intent('Witness.Active', conv => {
               url: `http://open-explorer.io/#/witness`,
             }),
             display: 'WHITE'
-          })
+          }),
+          new Suggestions('About', 'Asset', 'Block', 'Committee', 'Fees', 'Market', 'Workers', 'Help', 'Quit')
         );
       } else {
-        return conv.close(
+        return conv.ask(
           new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech1,
@@ -2106,12 +2245,11 @@ app.intent('Witness.One', conv => {
   /*
     witness_One function
   */
-  /*
   conv.fallbackCount = 0; // Required for tracking fallback attempts!
   const parameter = {}; // The dict which will hold our parameter data
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('witness_One', 1, parameter); // Need to set the data
-  */
+
   const input_witness_name = 'delegate-1.lafona';
   const qs_input = {
     //  HUG REST GET request parameters
@@ -2164,7 +2302,7 @@ app.intent('Witness.One', conv => {
 
       const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
       if (hasScreen === true) {
-        return conv.close(
+        return conv.ask(
           new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech1,
@@ -2178,14 +2316,25 @@ app.intent('Witness.One', conv => {
               url: `http://open-explorer.io/#/accounts/${witness_name}`
             }),
             display: 'WHITE'
-          })
+          }),
+          new SimpleResponse({
+            // Sending the details to the user & closing app.
+            speech: `<speak>Do you require any other Bitshares information?</speak>`,
+            text: `Do you require any other Bitshares information?`
+          }),
+          new Suggestions('About', 'Asset', 'Block', 'Committee', 'Fees', 'Market', 'Workers', 'Help', 'Quit')
         );
       } else {
-        return conv.close(
+        return conv.ask(
           new SimpleResponse({
             // No speech here, because we don't want to read everything out!
             speech: textToSpeech1,
             text: displayText1
+          }),
+          new SimpleResponse({
+            // Sending the details to the user & closing app.
+            speech: `<speak>Do you require any other Bitshares information?</speak>`,
+            text: `Do you require any other Bitshares information?`
           })
         );
       }
@@ -2203,7 +2352,6 @@ app.intent('Worker', conv => {
     worker function
   */
   conv.fallbackCount = 0; // Required for tracking fallback attempts!
-
   const parameter = {}; // The dict which will hold our parameter data
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('worker', 1, parameter); // Need to set the data
@@ -2248,12 +2396,11 @@ app.intent('Worker.Many', conv => {
   /*
     worker_Many function
   */
-  /*
   conv.fallbackCount = 0; // Required for tracking fallback attempts!
   const parameter = {}; // The dict which will hold our parameter data
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('worker_Many', 1, parameter); // Need to set the data
-  */
+
   const qs_input = {
     //  HUG REST GET request parameters
     api_key: '123abc'
@@ -2313,7 +2460,7 @@ app.intent('Worker.Many', conv => {
 
       const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
       if (hasScreen === true) {
-        return conv.close(
+        return conv.ask(
           new SimpleResponse({
             // Sending the details to the user
             speech: textToSpeech1,
@@ -2332,9 +2479,11 @@ app.intent('Worker.Many', conv => {
             url: `http://open-explorer.io/#/workers`,
           }),
           display: 'WHITE'
-        }));
+        }),
+        new Suggestions('About', 'Asset', 'Block', 'Committee', 'Fees', 'Market', 'Workers', 'Help', 'Quit')
+      );
       } else {
-        return conv.close(
+        return conv.ask(
           new SimpleResponse({
             // Sending the details to the user
             speech: textToSpeech1,
@@ -2361,12 +2510,11 @@ app.intent('Worker.One', conv => {
   /*
     worker_One function
   */
-  /*
   conv.fallbackCount = 0; // Required for tracking fallback attempts!
   const parameter = {}; // The dict which will hold our parameter data
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
   conv.contexts.set('worker_One', 1, parameter); // Need to set the data
-  */
+
   const input_worker_id = '1.14.50';
   const qs_input = {
     //  HUG REST GET request parameters
@@ -2407,7 +2555,7 @@ app.intent('Worker.One', conv => {
 
       const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
       if (hasScreen === true) {
-        return conv.close(
+        return conv.ask(
           new SimpleResponse({
             // Sending the details to the user
             speech: textToSpeech1,
@@ -2421,14 +2569,25 @@ app.intent('Worker.One', conv => {
               url: `http://open-explorer.io/#/objects/${worker_id}`,
             }),
             display: 'WHITE'
-          })
+          }),
+          new SimpleResponse({
+            // Sending the details to the user & closing app.
+            speech: `<speak>Do you require any other Bitshares information?</speak>`,
+            text: `Do you require any other Bitshares information?`
+          }),
+          new Suggestions('About', 'Asset', 'Block', 'Committee', 'Fees', 'Market', 'Workers', 'Help', 'Quit')
         );
       } else {
-        return conv.close(
+        return conv.ask(
           new SimpleResponse({
             // Sending the details to the user
             speech: textToSpeech1,
             text: displayText1
+          }),
+          new SimpleResponse({
+            // Sending the details to the user & closing app.
+            speech: `<speak>Do you require any other Bitshares information?</speak>`,
+            text: `Do you require any other Bitshares information?`
           })
         );
       }
@@ -2474,7 +2633,7 @@ app.intent('menuFallback', conv => {
 
     const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
     if (hasScreen === true) {
-      conv.ask(new Suggestions('Help', 'Quit'));
+      conv.ask(new Suggestions('About', 'Accounts', 'Assets', 'Blockchain', 'Committee', 'Markets', 'Network', 'Workers', 'Fees', 'Help', 'Quit'));
     }
   }
 })
@@ -2492,52 +2651,49 @@ app.intent('getHelpAnywhere', conv => {
 
   const textToSpeech = `<speak>` +
     `I heard you're having some problems with Beyond Bitshares? <break time="0.35s" /> ` +
-    `You can blahblah.` +
-    `You can blahblah.` +
-    `You can blahblah.` +
+    `We provide Bitshares block explorer functionality, enabling you to request info regarding Bitshares accounts, assets, committee members, witnesses, worker proposals and market information through the Google Assistant!` +
+    `Try to speak naturally when interacting with the bot, and be precise when providing user input (such as asset or account names).` +
+    `If you're having difficulties with speech recognition, enable Google personalization permissions or type your requests if possible.` +
     `</speak>`;
 
-  const textToDisplay = `<speak>` +
-    `I heard you're having some problems with Beyond Bitshares? ` +
-    `You can blahblah.` +
-    `You can blahblah.` +
-    `You can blahblah.`;
+  const textToDisplay = `I heard you're having some problems with Beyond Bitshares?` +
+      `We provide Bitshares block explorer functionality, enabling you to request info regarding Bitshares accounts, assets, committee members, witnesses, worker proposals and market behaviour through the Google Assistant!` +
+      `Try to speak naturally when interacting with the bot, and be precise when providing user input (such as asset or account names).` +
+      `If you're having difficulties with speech recognition, enable Google personalization permissions or type your requests if possible.`;
 
   const textToSpeech2 = `<speak>` +
-    `You can blahblah.` +
-    `You can blahblah.` +
-    `You can blahblah.` +
+    `So, what information do you require from the Beyond Bitshares block explorer?` +
     `</speak>`;
 
-  const textToDisplay2 = `I heard you're having some problems with Beyond Bitshares? ` +
-    `You can blahblah.` +
-    `You can blahblah.` +
-    `You can blahblah.`;
+  const textToDisplay2 = `So, what information do you require from the Beyond Bitshares block explorer?`;
 
-  conv.ask(new SimpleResponse({
-    // Sending the details to the user
-    speech: textToSpeech,
-    text: textToDisplay
-  }));
-
-  conv.ask(new SimpleResponse({
-    // Sending the details to the user
-    speech: textToSpeech2,
-    text: textToDisplay
-  }));
+  conv.ask(
+    new SimpleResponse({
+      // Sending the details to the user
+      speech: textToSpeech,
+      text: textToDisplay
+    }),
+    new SimpleResponse({
+      // Sending the details to the user
+      speech: textToSpeech2,
+      text: textToDisplay2
+    })
+  );
 
   const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
   if (hasScreen === true) {
-    conv.ask(new BasicCard({
-      title: `Template`,
-      text: 'Text to display in basic card.',
+    conv.ask(
+      new BasicCard({
+      title: `Need help using Bitshares?`,
+      text: `If you've run into issues when using the Bitshares DEX you can reach out to Bitshares community members via Bitsharestalk or Telegram.`,
       buttons: new Button({
-        title: 'Block explorer link',
-        url: `http://open-explorer.io`,
+        title: 'Bitsharestalk troubleshooting sub-forum',
+        url: `https://bitsharestalk.org/index.php?board=45.0`,
       }),
       display: 'WHITE'
-    }));
-    conv.ask(new Suggestions('Help', 'Quit'));
+    }),
+    new Suggestions('About', 'Asset', 'Block', 'Committee', 'Fees', 'Market', 'Workers', 'Help', 'Quit')
+  );
   }
 })
 
@@ -2565,15 +2721,18 @@ app.intent('getHelpFallback', conv => {
     console.log("HANDLED FALLBACK!");
     let current_fallback_phrase = MENU_FALLBACK[conv.fallbackCount];
 
-    conv.ask(new SimpleResponse({
-      // Sending the details to the user
-      speech: current_fallback_phrase,
-      text: current_fallback_phrase
-    }));
+    conv.ask(
+      new SimpleResponse({
+        // Sending the details to the user
+        speech: current_fallback_phrase,
+        text: current_fallback_phrase
+      })
+    );
 
     const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
     if (hasScreen === true) {
-      conv.ask(new Suggestions('Help', 'Quit'));
+      // TODO: Change the buttons to reflect the previous intent
+      conv.ask(new Suggestions('About', 'Accounts', 'Assets', 'Blockchain', 'Committee', 'Markets', 'Network', 'Workers', 'Fees', 'Help', 'Quit'));
     }
   }
 })
@@ -2605,13 +2764,12 @@ app.intent('goodbye', conv => {
   );
 })
 
-app.catch((conv, e) => {
+app.catch((conv, error_message) => {
   /*
     Generic error catch
-    https://github.com/actions-on-google/actions-on-google-nodejs/blob/v2.0.0-alpha/samples/js/app/name-psychic/functions/index.js#L212
   */
-  console.error(e)
-  conv.close(responses.readMindError)
+  console.error(error_message);
+  return catch_error(conv, error_message, 'Worker.One');
 })
 
 exports.BeyondBitshares = functions.https.onRequest(app)
