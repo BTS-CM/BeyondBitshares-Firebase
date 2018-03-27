@@ -21,10 +21,17 @@ const app = dialogflow({
   debug: true
 }) // Creating the primary dialogflow app element
 
-function catch_error(conv, error_message) {
+function catch_error(conv, error_message, intent) {
   /*
   Generic function for reporting errors & providing error handling for the user.
   */
+  chatbase_analytics(
+    conv,
+    'Error within intent ${intent}', // input_message
+    intent, // input_intent
+    'error' // win_or_fail
+  );
+
   if(error_message instanceof Error) {
       console.error(error_message);
   } else {
@@ -35,6 +42,27 @@ function catch_error(conv, error_message) {
       // If we somehow fail, do so gracefully!
       speech: "An unexpected error was encountered! Let's end our Beyond Bitshares session for now.",
       text: "An unexpected error was encountered! Let's end our Beyond Bitshares session for now."
+    })
+  );
+}
+
+function invalid_input(conv, intent_name) {
+  /*
+  Reducing code duplication.
+  Replace conv.close with a direction to a fallback intent in the future!
+  */
+  chatbase_analytics(
+    conv,
+    'User input invalid data within intent ${intent_name}', // input_message
+    intent_name, // input_intent
+    'fail' // win_or_fail
+  );
+
+  return conv.close(
+      new SimpleResponse({
+      // If we somehow fail, do so gracefully!
+      speech: "You provided invalid input data, try again with alternative input!",
+      text: "You provided invalid input data, try again with alternative input!"
     })
   );
 }
@@ -70,7 +98,7 @@ function chatbase_analytics(conv, input_message, input_intent, win_or_fail) {
     .setMessage(input_message)
     .setVersion('1.0')
     .setUserId(userId.toString())
-    .setAsTypeAgent() // sets the message as type agent
+    .setAsTypeUser() // sets the message as type agent
     .setAsNotHandled() // set the message as not handled -- this means the opposite of the preceding
     .setIntent(input_intent) // the intent of the sent message (does not have to be set for agent messages)
     .setTimestamp(Date.now().toString()) // Only unix epochs with Millisecond precision
@@ -79,7 +107,6 @@ function chatbase_analytics(conv, input_message, input_intent, win_or_fail) {
     .catch(err => console.error(err));
   }
 }
-
 
 function hug_request(target_url, target_function, method, qs_contents) {
   // Setting URL and headers for request
@@ -182,13 +209,6 @@ app.intent('About', conv => {
     `Dynamic Account Permissions - Management for the corporate environment.` +
     `Recurring & Scheduled Payments - Flexible withdrawal permissions.`;
 
-  const textToSpeech2 = `Referral Rewards Program - Network growth through adoption rewards.` +
-    `User-Issued Assets - Regulation-compatible cryptoasset issuance.` +
-    `Stakeholder-Approved Project Funding - A self-sustaining funding model.` +
-    `Transferable Named Accounts - Easy and secure transactions.` +
-    `Delegated Proof-of-Stake Consensus - A robust and flexible consensus protocol.` +
-    `Want to know more about any of Bitshares features?`;
-
   const displayText1 = `The BitShares platform has numerous innovative features which are not found elsewhere within the smart contract industry such as: \n\n` +
     `Price-Stable Cryptocurrencies - SmartCoins provide the freedom of cryptocurrency with the stability of FIAT assets.\n\n` +
     `Decentralized Asset Exchange - A fast and fluid trading platform.\n\n` +
@@ -203,6 +223,13 @@ app.intent('About', conv => {
     `Delegated Proof-of-Stake Consensus - A robust and flexible consensus protocol.\n\n` +
     `Want to know more about any of Bitshares features?`;
 
+  const textToSpeech2 = `Referral Rewards Program - Network growth through adoption rewards.` +
+    `User-Issued Assets - Regulation-compatible cryptoasset issuance.` +
+    `Stakeholder-Approved Project Funding - A self-sustaining funding model.` +
+    `Transferable Named Accounts - Easy and secure transactions.` +
+    `Delegated Proof-of-Stake Consensus - A robust and flexible consensus protocol.` +
+    `Want to know more about any of Bitshares features?`;
+
   conv.ask(
     new SimpleResponse({
       speech: textToSpeech1,
@@ -211,12 +238,21 @@ app.intent('About', conv => {
     new SimpleResponse({
       speech: textToSpeech2,
       text: displayText2
+    }),
+    new BasicCard({
+      title: `Want to know more?`,
+      text: 'The Bitshares documentation wiki has great information!',
+      buttons: new Button({
+        title: 'Bitshares docs',
+        url: `http://docs.bitshares.org/index.html`,
+      }),
+      display: 'WHITE'
     })
   );
 
   const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
   if (hasScreen === true) {
-    conv.ask(new Suggestions('Delegated Proof-of-Stake Consensus', 'Price-Stable Cryptocurrencies', 'Decentralized Asset Exchange', 'Industrial Performance and Scalability', 'Dynamic Account Permissions', 'Recurring & Scheduled Payments', 'Referral Rewards Program', 'User-Issued Assets', 'Stakeholder-Approved Project Funding', 'Transferable Named Accounts', 'Help', 'Quit'));
+    conv.ask(new Suggestions('About', 'Accounts', 'Assets', 'Blockchain', 'Committee', 'Markets', 'Network', 'Workers', 'Fees', 'Help', 'Quit'));
   }
 
   chatbase_analytics(
@@ -238,43 +274,30 @@ app.intent('Account', conv => {
   conv.contexts.set('account', 1, parameter); // Need to set the data
 
   const textToSpeech1 = `<speak>` +
-    `Available Bitshares account information:` +
-    `Account's basic overview.` +
-    `Account's balances.` +
-    `Account's open orders.` +
-    `Account's trade history.` +
-    `Account's call positions.` +
-    `Life Time Membership check.` +
+    `What account information do you want? You can ask for a general account overview or request specific information such as an user's balances, open orders, call positions, their recent trade history and life time membership verification"`
     `</speak>`;
 
-  const textToSpeech2 = `<speak>` +
-    `What do you want to find out about an account?` +
-    `</speak>`;
-
-  const displayText1 = `Available Bitshares account information:` +
-    `Account's basic overview.` +
-    `Account's balances.` +
-    `Account's open orders.` +
-    `Account's trade history.` +
-    `Account's call positions.` +
-    `Life Time Membership check.`;
-
-  const displayText2 = `What do you want to find out about an account?`;
+  const displayText1 = `What account information do you want? You can ask for a general account overview or request specific information such as an user's balances, open orders, call positions, their recent trade history and life time membership verification"`;
 
   conv.ask(
     new SimpleResponse({
       speech: textToSpeech1,
       text: displayText1
     }),
-    new SimpleResponse({
-      speech: textToSpeech2,
-      text: displayText2
+    new BasicCard({
+      title: `Bitshares Account Lookup`,
+      text: 'You can search for accounts via open-explorer if Beyond Bitshares is insufficient',
+      buttons: new Button({
+        title: 'Block explorer link',
+        url: `http://open-explorer.io/#/accounts`,
+      }),
+      display: 'WHITE'
     })
   );
 
   const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
   if (hasScreen === true) {
-    conv.ask(new Suggestions(`Account's Basic Overview`, 'Account Balances', `Account's Open Orders`, `Account's Trade History`, `Account's Call Positions`, 'Help', 'Quit'));
+    conv.ask(new Suggestions('About', 'Asset', 'Block', 'Committee', 'Fees', 'Market', 'Workers', 'Help', 'Quit'));
   }
   chatbase_analytics(
     conv,
@@ -372,23 +395,11 @@ app.intent('Account.Balances', conv => {
         );
       }
     } else {
-      chatbase_analytics(
-        conv,
-        'Invalid Account ', // input_message
-        'Account.Balances', // input_intent
-        'User fail' // win_or_fail
-      );
-      return catch_error(conv, `Account not valid! account_balances`);
+      return invalid_input(conv, `account_balances`);
     }
   })
   .catch(error_message => {
-    chatbase_analytics(
-      conv,
-      'Error! Backend fail!', // input_message
-      'Account.Balances', // input_intent
-      'Backend fail' // win_or_fail
-    );
-    return catch_error(conv, error_message);
+    return catch_error(conv, error_message, 'account_balances');
   });
 })
 
@@ -470,17 +481,11 @@ app.intent('Account.CallPositions', conv => {
           text: displayText
         }));
       } else {
-        return catch_error(conv, `HUG Function failure! get_callpositions`);
+        return invalid_input(conv, `get_callpositions`);
       }
     })
   .catch(error_message => {
-    chatbase_analytics(
-      conv,
-      'Error! Backend fail!', // input_message
-      'Account.CallPositions', // input_intent
-      'Backend fail' // win_or_fail
-    );
-    return catch_error(conv, error_message);
+    return catch_error(conv, error_message, 'Account.CallPositions');
   });
 })
 
@@ -503,7 +508,7 @@ app.intent('Account.Info', conv => {
   };
   return hug_request('HUG', 'account_info', 'GET', qs_input)
   .then(body => {
-    if (body.valid_key === true) { // NEED TO CHANGE TO CHECKING ACCOUNT VALIDITY, NOT KEY!
+    if (body.valid_account === true) { // NEED TO CHANGE TO CHECKING ACCOUNT VALIDITY, NOT KEY!
 
       const info = body.account_info; // This var holds the account's call positions
       const id = info.id;
@@ -536,17 +541,11 @@ app.intent('Account.Info', conv => {
       );
 
     } else {
-    return catch_error(conv, `HUG Function failure! account_info`);
+      return invalid_input(conv, `account_info`);
     }
   })
   .catch(error_message => {
-    chatbase_analytics(
-      conv,
-      'Error! Backend fail!', // input_message
-      'Account.Info', // input_intent
-      'Backend fail' // win_or_fail
-    );
-    return catch_error(conv, error_message);
+    return catch_error(conv, error_message, 'Account.Info');
   });
 })
 
@@ -561,18 +560,20 @@ app.intent('Asset', conv => {
   conv.contexts.set('asset', 1, parameter); // Need to set the data
 
   const textToSpeech = `<speak>` +
-    `You can request the following Asset information:` +
-    `Information about a single asset.` +
-    `Top Smartcoins.` +
-    `Top User Issued Assets.` +
-    `What do you want to know about Bitshares assets?` +
-    `</speak>`;
+                          `What Bitshares asset information do you want?` +
+                          `You can ask for:` +
+                          `An individual asset's information.` +
+                          `The top smartcoins based on volume.` +
+                          `The top User Issued Assets based on volume.` +
+                          `What do you want to know about Bitshares assets?` +
+                        `</speak>`;
 
-  const displayText = `You can request the following Asset information:` +
-    `Information about a single asset.` +
-    `Top Smartcoins.` +
-    `Top User Issued Assets.` +
-    `What do you want to know about Bitshares assets?`;
+  const displayText = `What Bitshares asset information do you want?\n\n` +
+                      `You can ask for:` +
+                      `An individual asset's information.` +
+                      `The top smartcoins based on volume.` +
+                      `The top User Issued Assets based on volume.` +
+                      `So, what do you want to know?`;
 
   chatbase_analytics(
     conv,
@@ -581,11 +582,22 @@ app.intent('Asset', conv => {
     'Win' // win_or_fail
   );
 
-  conv.ask(new SimpleResponse({
-    // Sending the details to the user
-    speech: textToSpeech,
-    text: displayText
-  }));
+  conv.ask(
+    new SimpleResponse({
+      // Sending the details to the user
+      speech: textToSpeech,
+      text: displayText
+    }),
+    new BasicCard({
+      title: `Bitshares Assets`,
+      text: 'Want to know more about assets on the Bitshares network? Check out the linked website!',
+      buttons: new Button({
+        title: 'Bitshares asset docs',
+        url: `http://docs.bitshares.org/bitshares/user/assets.html`,
+      }),
+      display: 'WHITE'
+    })
+  );
 
   const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
   if (hasScreen === true) {
@@ -649,18 +661,11 @@ app.intent('Asset.One', conv => {
         text: displayText
       }))
     } else {
-      return catch_error(conv, `HUG Function failure! get_asset`);
-      // TODO: Change to asset name fallback in future
+      return invalid_input(conv, `get_asset`);
     }
   })
   .catch(error_message => {
-    chatbase_analytics(
-      conv,
-      'Error! Backend fail!', // input_message
-      'Asset.One', // input_intent
-      'Backend fail' // win_or_fail
-    );
-    return catch_error(conv, error_message);
+    return catch_error(conv, error_message,'Asset.One');
   });
 })
 
@@ -675,27 +680,46 @@ app.intent('Block', conv => {
   conv.contexts.set('block', 1, parameter); // Need to set the data
 
   const textToSpeech = `<speak>` +
-    `What kind of block information do you seek?` +
-    `Latest block details.` +
-    `Specific block details.` +
-    `An overview of the blockchain.` +
-    `</speak>`;
+                        `What kind of block information do you want?` +
+                        `The Latest Bitshares block details?` +
+                        `The details of a specific Bitshares block?` +
+                        `Perhaps an overview of the Bitshares blockchain?` +
+                        `So what will it be?` +
+                        `</speak>`;
 
-  const displayText = `What kind of block information do you seek?` +
-    `The latest block details?` +
-    `A specific block's details?` +
-    `Perhaps an overview of the blockchain?`;
+  const displayText = `What kind of block information do you want?` +
+                      `The Latest Bitshares block details?` +
+                      `The details of a specific Bitshares block?` +
+                      `Perhaps an overview of the Bitshares blockchain?` +
+                      `So what will it be?`;
 
-  conv.ask(new SimpleResponse({
-    // Sending the details to the user
-    speech: textToSpeech,
-    text: displayText
-  }));
+  conv.ask(
+    new SimpleResponse({
+      speech: textToSpeech1,
+      text: displayText1
+    }),
+    new BasicCard({
+      title: `Bitshares Blocks`,
+      text: 'Want to view Bitshares block details in a web browser?',
+      buttons: new Button({
+        title: 'Block explorer link',
+        url: `http://open-explorer.io/#/search`,
+      }),
+      display: 'WHITE'
+    })
+  );
 
   const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
   if (hasScreen === true) {
-    conv.ask(new Suggestions('Latest block details', 'Blockchain overview', 'Help', 'Back', 'Quit'));
+    conv.ask(new Suggestions('Latest Bitshares block details', 'Bitshares blockchain overview', 'Help', 'Quit'));
   }
+
+  chatbase_analytics(
+    conv,
+    'Block page', // input_message
+    'Block', // input_intent
+    'Win' // win_or_fail
+  );
 })
 
 app.intent('Block.Latest', conv => {
@@ -714,67 +738,55 @@ app.intent('Block.Latest', conv => {
   };
   return hug_request('HUG', 'get_latest_block', 'GET', qs_input)
   .then(body => {
-    if (body.valid_block_number === true && body.valid_key === true) {
+    const previous = body.previous;
+    const witness = body.witness;
+    const transaction_merkle_root = body.transaction_merkle_root;
+    const tx_count = Object.keys(body.transactions).length;
+    const block_id = body.id;
+    const block_date = body.block_date;
+    const block_number = body.block_number;
 
-      const previous = body.previous;
-      const witness = body.witness;
-      const transaction_merkle_root = body.transaction_merkle_root;
-      const tx_count = Object.keys(body.transactions).length;
-      const block_id = body.id;
-      const block_date = body.block_date;
-      const block_number = body.block_number;
+    const textToSpeech = `<speak>` +
+      `Block ${block_number} is the latest Bitshares block.` +
+      `It was produced on ${block_date} by witness with ID ${witness}.` +
+      `There were ${tx_count} transactions in the block.` +
+      `</speak>`;
 
-      const textToSpeech = `<speak>` +
-        `Block ${block_number} is the latest Bitshares block.` +
-        `It was produced on ${block_date} by witness with ID ${witness}.` +
-        `There were ${tx_count} transactions in the block.` +
-        `</speak>`;
+    const displayText = `Block ${block_number} (ID: ${block_id}) is the latest Bitshares block.\n\n` +
+      `The previous block was ${previous}, with a TX merkle root of ${transaction_merkle_root}.\n\n` +
+      `It was produced on ${block_date} by witness with ID ${witness}.\n\n` +
+      `There were ${tx_count} transactions in the block.`;
 
-      const displayText = `Block ${block_number} (ID: ${block_id}) is the latest Bitshares block.\n\n` +
-        `The previous block was ${previous}, with a TX merkle root of ${transaction_merkle_root}.\n\n` +
-        `It was produced on ${block_date} by witness with ID ${witness}.\n\n` +
-        `There were ${tx_count} transactions in the block.`;
-
-      const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
-      if (hasScreen === true) {
-        return conv.close(
-          new SimpleResponse({
-            // Sending the details to the user
-            speech: textToSpeech,
-            text: displayText
+    const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
+    if (hasScreen === true) {
+      return conv.close(
+        new SimpleResponse({
+          // Sending the details to the user
+          speech: textToSpeech,
+          text: displayText
+        }),
+        new BasicCard({
+          title: `More block info available!'`,
+          text: 'Interested in more block information?',
+          buttons: new Button({
+            title: 'Block explorer link',
+            url: `http://open-explorer.io/#/search`,
           }),
-          new BasicCard({
-            title: `More block info available!'`,
-            text: 'Interested in more block information?',
-            buttons: new Button({
-              title: 'Block explorer link',
-              url: `http://open-explorer.io/#/search`,
-            }),
-            display: 'WHITE'
-          })
-        );
-      } else {
-        return conv.close(
-          new SimpleResponse({
-            // Sending the details to the user
-            speech: textToSpeech,
-            text: displayText
-          })
-        );
-      }
+          display: 'WHITE'
+        })
+      );
     } else {
-      return catch_error(conv, `HUG Function failure! get_latest_block`);
-      // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
+      return conv.close(
+        new SimpleResponse({
+          // Sending the details to the user
+          speech: textToSpeech,
+          text: displayText
+        })
+      );
     }
   })
   .catch(error_message => {
-    chatbase_analytics(
-      conv,
-      'Error! Backend fail!', // input_message
-      'Block.Latest', // input_intent
-      'Backend fail' // win_or_fail
-    );
-    return catch_error(conv, error_message);
+    return catch_error(conv, error_message, 'Block.Latest');
   });
 })
 
@@ -833,18 +845,11 @@ app.intent('Block.One', conv => {
           })
         );
       } else {
-        return catch_error(conv, `HUG Function failure! get_block_details`);
-        // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
+        return invalid_input(conv, `get_block_details`);
       }
   })
   .catch(error_message => {
-    chatbase_analytics(
-      conv,
-      'Error! Backend fail!', // input_message
-      'Block.One', // input_intent
-      'Backend fail' // win_or_fail
-    );
-    return catch_error(conv, error_message);
+    return catch_error(conv, error_message, 'Block.One');
   });
 })
 
@@ -900,18 +905,11 @@ app.intent('Block.Overview', conv => {
         )
 
       } else {
-        return catch_error(conv, `HUG Function failure! chain_info`);
-        // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
+        return invalid_input(conv, `chain_info`);
       }
   })
   .catch(error_message => {
-    chatbase_analytics(
-      conv,
-      'Error! Backend fail!', // input_message
-      'Block.Overview', // input_intent
-      'Backend fail' // win_or_fail
-    );
-    return catch_error(conv, error_message);
+    return catch_error(conv, error_message, 'Block.Overview');
   });
 })
 
@@ -926,26 +924,42 @@ app.intent('Committee', conv => {
   conv.contexts.set('committee', 1, parameter); // Need to set the data
 
   const textToSpeech = `<speak>` +
-    `Do you want to look up the active committee members, or a single committee member?` +
-    `If the later, please accurately specify their account name` +
-    `</speak>`;
+                          `What do you want to know about the active Bitshares committee?` +
+                          `Want to find know who the active committee members are?` +
+                          `Alternatively, do you want info regarding a specific committee member?` +
+                        `</speak>`;
 
-  const displayText = `Do you want to look up the active committee members, or a single committee member?` +
-    `If the later, please accurately specify their account name`;
+  const displayText = `What do you want to know about the Bitshares committee?` +
+                      `Want to find know who the active committee members are?` +
+                      `Alternatively, do you want info regarding a specific committee member?`;
 
   conv.ask(
     new SimpleResponse({
-      // Sending the details to the user
       speech: textToSpeech,
       text: displayText
+    }),
+    new BasicCard({
+      title: `Bitshares Committee reference`,
+      text: 'Want to know what the Bitshares committee is?',
+      buttons: new Button({
+        title: 'Bitshares documentation',
+        url: `http://docs.bitshares.org/bitshares/user/committee.html`,
+      }),
+      display: 'WHITE'
     })
   );
 
   const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
   if (hasScreen === true) {
-    conv.ask(new Suggestions('Active committee members', 'Help', 'Back', 'Quit'));
+    conv.ask(new Suggestions('Active committee members', 'Help', 'Quit'));
   }
 
+  chatbase_analytics(
+    conv,
+    'Committee page', // input_message
+    'Committee', // input_intent
+    'Win' // win_or_fail
+  );
 })
 
 app.intent('Committee.Active', conv => {
@@ -1027,18 +1041,11 @@ app.intent('Committee.Active', conv => {
           );
         }
       } else {
-        return catch_error(conv, `HUG Function failure! get_committee_members`);
-        // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
+        return invalid_input(conv, `get_committee_members`);
       }
   })
   .catch(error_message => {
-    chatbase_analytics(
-      conv,
-      'Error! Backend fail!', // input_message
-      'Committee.Active', // input_intent
-      'Backend fail' // win_or_fail
-    );
-    return catch_error(conv, error_message);
+    return catch_error(conv, error_message, 'Committee.Active');
   });
 })
 
@@ -1098,18 +1105,11 @@ app.intent('Committee.One', conv => {
         }));
 
       } else {
-        return catch_error(conv, `HUG Function failure! get_committee_member`);
-        // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
+        return invalid_input(conv, `get_committee_member`);
       }
   })
   .catch(error_message => {
-    chatbase_analytics(
-      conv,
-      'Error! Backend fail!', // input_message
-      'Committee.One', // input_intent
-      'Backend fail' // win_or_fail
-    );
-    return catch_error(conv, error_message);
+    return catch_error(conv, error_message, 'Committee.One');
   });
 })
 
@@ -1217,10 +1217,11 @@ app.intent('Fees', conv => {
         })
       );
     }
+
   })
   .catch(error => {
     // Catch unexpected changes to async handling
-    return catch_error(conv, err);
+    return catch_error(conv, err, 'Fees');
   });
 })
 
@@ -1235,15 +1236,16 @@ app.intent('Market', conv => {
   conv.contexts.set('market', 1, parameter); // Need to set the data
 
   const textToSpeech1 = `<speak>` +
-    `You can request an individual trading pair's following market information:` +
+    `What Bitshares market information do you require?` +
+    `You can request the following information regarding an individual Bitshares market trading pair:` +
     `24 hour trading volume.` +
-    `Order orderbook.` +
+    `Current market orderbook.` +
     `Price ticker.` +
-    `Market trade history.` +
+    `Recent market trade history.` +
     `</speak>`;
 
   const textToSpeech2 = `<speak>` +
-    `What do you want to do? Remember to provide the trading pair in your query!` +
+    `So, what market information do you want? Remember to provide the trading pair in your query!` +
     `</speak>`;
 
   const displayText1 = `You can request an individual trading pair's following market information:` +
@@ -1254,22 +1256,39 @@ app.intent('Market', conv => {
 
   const displayText2 = `What do you want to do? Remember to provide the trading pair in your query!`;
 
-  conv.ask(new SimpleResponse({
+  conv.ask(
+    new SimpleResponse({
+      // Sending the details to the user
+      speech: textToSpeech1,
+      text: displayText1
+    }),
+    new SimpleResponse({
     // Sending the details to the user
-    speech: textToSpeech1,
-    text: displayText1
-  }));
-
-  conv.ask(new SimpleResponse({
-    // Sending the details to the user
-    speech: textToSpeech2,
-    text: displayText2
-  }));
+      speech: textToSpeech2,
+      text: displayText2
+    }),
+    new BasicCard({
+      title: `Bitshares Market information`,
+      text: 'There is plenty of valuable information within the Bitshares docs regarding the Bitshares Decentralized Exchange!',
+      buttons: new Button({
+        title: 'Bitshares market documentation',
+        url: `http://docs.bitshares.org/bitshares/user/dex.html`,
+      }),
+      display: 'WHITE'
+    })
+  );
 
   const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
   if (hasScreen === true) {
-    conv.ask(new Suggestions('Back', 'Help', 'Quit'));
+    conv.ask(new Suggestions('Help', 'Quit'));
   }
+
+  chatbase_analytics(
+    conv,
+    'Market page', // input_message
+    'Market', // input_intent
+    'Win' // win_or_fail
+  );
 })
 
 app.intent('Market.TopUIA', conv => {
@@ -1343,7 +1362,7 @@ app.intent('Market.TopUIA', conv => {
     })
     .catch(error => {
       // Catch unexpected changes to async handling
-      return catch_error(conv, err);
+      return catch_error(conv, err, 'top_uias');
     });
   })
 
@@ -1418,7 +1437,7 @@ app.intent('Market.TopMPA', conv => {
   })
   .catch(error => {
     // Catch unexpected changes to async handling
-    return catch_error(conv, err);
+    return catch_error(conv, err, 'top_smartcoins');
   });
 })
 
@@ -1492,7 +1511,7 @@ app.intent('Market.TopAll', conv => {
   })
   .catch(error => {
     // Catch unexpected changes to async handling
-    return catch_error(conv, err);
+    return catch_error(conv, err, 'top_markets');
   });
 })
 
@@ -1514,7 +1533,7 @@ app.intent('Market.24HRVolume', conv => {
   };
   return hug_request('HUG', 'market_24hr_vol', 'GET', qs_input)
   .then(body => {
-    if (body.valid_market === true && body.valid_key === true) {
+    if (body.valid_market === true) {
 
       const market_volume_24hr = body.market_volume_24hr;
       var base_asset = input_trading_pair.split("")[0];
@@ -1559,18 +1578,11 @@ app.intent('Market.24HRVolume', conv => {
       }
 
     } else {
-      return catch_error(conv, `HUG Function failure! market_24hr_vol`);
-      // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
+      return invalid_input(conv, `market_24hr_vol`);
     }
   })
   .catch(error_message => {
-    chatbase_analytics(
-      conv,
-      'Error! Backend fail!', // input_message
-      'Market.24HRVolume', // input_intent
-      'Backend fail' // win_or_fail
-    );
-    return catch_error(conv, error_message);
+    return catch_error(conv, error_message, 'Market.24HRVolume');
   });
 })
 
@@ -1593,7 +1605,7 @@ app.intent('Market.Orderbook', conv => {
   };
   return hug_request('HUG', 'market_orderbook', 'GET', qs_input)
   .then(body => {
-    if (body.valid_market === true && body.valid_key === true) {
+    if (body.valid_market === true) {
 
       var base_asset = input_market_pair.split(":")[0];
       var quote_asset = input_market_pair.split(":")[1];
@@ -1678,18 +1690,11 @@ app.intent('Market.Orderbook', conv => {
       }
 
     } else {
-      return catch_error(conv, `HUG Function failure! market_orderbook`);
-      // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
+      return invalid_input(conv, `market_orderbook`);
     }
   })
   .catch(error_message => {
-    chatbase_analytics(
-      conv,
-      'Error! Backend fail!', // input_message
-      'Market.Orderbook', // input_intent
-      'Backend fail' // win_or_fail
-    );
-    return catch_error(conv, error_message);
+    return catch_error(conv, error_message, 'Market.Orderbook');
   });
 })
 
@@ -1814,18 +1819,11 @@ app.intent('Market.Ticker', conv => {
       }
 
     } else {
-      return catch_error(conv, `HUG Function failure! market_ticker`);
-      // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
+      return invalid_input(conv, `market_ticker`);
     }
   })
   .catch(error_message => {
-    chatbase_analytics(
-      conv,
-      'Error! Backend fail!', // input_message
-      'Market.Ticker', // input_intent
-      'Backend fail' // win_or_fail
-    );
-    return catch_error(conv, error_message);
+    return catch_error(conv, error_message, 'Market.Ticker');
   });
 })
 
@@ -1929,18 +1927,11 @@ app.intent('Market.TradeHistory', conv => {
       }
 
     } else {
-      return catch_error(conv, `HUG Function failure! market_trade_history`);
-      // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
+      return invalid_input(conv, `market_trade_history`);
     }
   })
   .catch(error_message => {
-    chatbase_analytics(
-      conv,
-      'Error! Backend fail!', // input_message
-      'Market.TradeHistory', // input_intent
-      'Backend fail' // win_or_fail
-    );
-    return catch_error(conv, error_message);
+    return catch_error(conv, error_message, 'Market.TradeHistory');
   });
 })
 
@@ -1955,21 +1946,39 @@ app.intent('Witness', conv => {
   conv.contexts.set('witness', 1, parameter); // Need to set the data
 
   const textToSpeech = `<speak>` +
-    `Do you want information regarding an individual witness, or a summary of all active witnesses?` +
+    `Do you want information regarding an individual Bitshares witness, or a summary of all active Bitshares witnesses?` +
     `</speak>`;
 
   const displayText = `Do you want information regarding an individual witness, or a summary of all active witnesses?`;
 
-  conv.ask(new SimpleResponse({
-    // Sending the details to the user
-    speech: textToSpeech,
-    text: displayText
-  }));
+  conv.ask(
+    new SimpleResponse({
+      // Sending the details to the user
+      speech: textToSpeech,
+      text: displayText
+    }),
+    new BasicCard({
+      title: `Bitshares Witness documentation`,
+      text: 'You can find out more about Bitshares witnesses within the Bitshares documentation!',
+      buttons: new Button({
+        title: 'Bitshares witness documentation',
+        url: `http://docs.bitshares.org/bitshares/user/witness.html`,
+      }),
+      display: 'WHITE'
+    })
+  );
 
   const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
   if (hasScreen === true) {
-    conv.ask(new Suggestions('Active witness summary', 'Help', 'Quit'));
+    conv.ask(new Suggestions('Active Bitshares witness summary', 'Help', 'Quit'));
   }
+
+  chatbase_analytics(
+    conv,
+    'Witness page', // input_message
+    'Witness', // input_intent
+    'Win' // win_or_fail
+  );
 })
 
 app.intent('Witness.Active', conv => {
@@ -2085,18 +2094,11 @@ app.intent('Witness.Active', conv => {
         );
       }
     } else {
-      return catch_error(conv, `HUG Function failure! list_of_witnesses`);
-      // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
+      return invalid_input(conv, `list_of_witnesses`);
     }
   })
   .catch(error_message => {
-    chatbase_analytics(
-      conv,
-      'Error! Backend fail!', // input_message
-      'Witness.Active', // input_intent
-      'Backend fail' // win_or_fail
-    );
-    return catch_error(conv, error_message);
+    return catch_error(conv, error_message, 'Witness.Active');
   });
 })
 
@@ -2188,18 +2190,11 @@ app.intent('Witness.One', conv => {
         );
       }
     } else {
-      return catch_error(conv, `HUG Function failure! find_witness`);
-      // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
+      return invalid_input(conv, `find_witness`);
     }
   })
   .catch(error_message => {
-    chatbase_analytics(
-      conv,
-      'Error! Backend fail!', // input_message
-      'Witness.One', // input_intent
-      'Backend fail' // win_or_fail
-    );
-    return catch_error(conv, error_message);
+    return catch_error(conv, error_message, 'Witness.One');
   });
 })
 
@@ -2214,21 +2209,39 @@ app.intent('Worker', conv => {
   conv.contexts.set('worker', 1, parameter); // Need to set the data
 
   const textToSpeech = `<speak>` +
-    `Do you want information regarding an individual worker proposal, or a summary of all active worker proposals?` +
+    `Do you want information regarding an individual Bitshares worker proposal, or a summary of all active Bitshares worker proposals?` +
     `</speak>`;
 
-  const displayText = `Do you want information regarding an individual worker proposal, or a summary of all active worker proposals?`;
+  const displayText = `Do you want information regarding an individual Bitshares worker proposal, or a summary of all active Bitshares worker proposals?`;
 
-  conv.ask(new SimpleResponse({
-    // Sending the details to the user
-    speech: textToSpeech,
-    text: displayText
-  }));
+  conv.ask(
+    new SimpleResponse({
+      // Sending the details to the user
+      speech: textToSpeech,
+      text: displayText
+    }),
+    new BasicCard({
+      title: `Bitshares Worker Proposal documentation`,
+      text: 'You can find out more about Bitshares worker proposals within the Bitshares documentation!',
+      buttons: new Button({
+        title: 'Bitshares worker proposal documentation',
+        url: `http://docs.bitshares.org/bitshares/user/worker.html`,
+      }),
+      display: 'WHITE'
+    })
+  );
 
   const hasScreen = conv.surface.capabilities.has('actions.capability.SCREEN_OUTPUT');
   if (hasScreen === true) {
     conv.ask(new Suggestions('Active worker proposals', 'Help', 'Quit'));
   }
+
+  chatbase_analytics(
+    conv,
+    'Worker Proposal page', // input_message
+    'Worker', // input_intent
+    'Win' // win_or_fail
+  );
 })
 
 app.intent('Worker.Many', conv => {
@@ -2336,18 +2349,11 @@ app.intent('Worker.Many', conv => {
       }
 
     } else {
-      return catch_error(conv, `HUG Function failure! get_worker_proposals`);
-      // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
+      return invalid_input(conv, `get_worker_proposals`);
     }
   })
   .catch(error_message => {
-    chatbase_analytics(
-      conv,
-      'Error! Backend fail!', // input_message
-      'Worker.Many', // input_intent
-      'Backend fail' // win_or_fail
-    );
-    return catch_error(conv, error_message);
+    return catch_error(conv, error_message, 'Worker.Many');
   });
 })
 
@@ -2428,18 +2434,11 @@ app.intent('Worker.One', conv => {
       }
 
     } else {
-      return catch_error(conv, `HUG Function failure! get_worker`);
-      // RELACE WITH FALLBACK ASKING FOR DIFFERENT ASSET NAME!
+      return invalid_input(conv, `get_worker`);
     }
   })
   .catch(error_message => {
-    chatbase_analytics(
-      conv,
-      'Error! Backend fail!', // input_message
-      'Worker.One', // input_intent
-      'Backend fail' // win_or_fail
-    );
-    return catch_error(conv, error_message);
+    return catch_error(conv, error_message, 'Worker.One');
   });
 })
 
@@ -2590,11 +2589,20 @@ app.intent('goodbye', conv => {
   const speechToText = `Sorry to see you go, come back soon? \n\n` +
     `Goodbye.`;
 
-  conv.close(new SimpleResponse({
-    // Sending the details to the user
-    speech: textToSpeech,
-    text: displayText
-  }));
+  chatbase_analytics(
+    conv,
+    'Goodbye', // input_message
+    'Goodbye', // input_intent
+    'Win' // win_or_fail
+  );
+
+  conv.close(
+    new SimpleResponse({
+      // Sending the details to the user
+      speech: textToSpeech,
+      text: displayText
+    })
+  );
 })
 
 app.catch((conv, e) => {
