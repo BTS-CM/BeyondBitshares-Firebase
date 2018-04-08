@@ -145,14 +145,32 @@ app.intent('Welcome', conv => {
   /*
   The default welcome intent
   */
+
+  /*
+  if (conv.getContextArgument('Welcome', 'placeholder')) {
+    const test = app.getContextArgument('Welcome', 'placeholder').value;
+    console.log(`Context detection: ${test}`);
+  } else {
+    conv.user.storage.fallbackCount = 0;
+  }
+  */
   conv.user.storage.fallbackCount = 0;
 
-  console.log(`Fallback count: ${conv.user.storage.fallbackCount}`);
+  //console.log(`Fallback count: ${conv.user.storage.fallbackCount}`);
   //conv.user.storage.fallbackCount = 0; // Required for tracking fallback attempts!
 
   const welcome_param = {}; // The dict which will hold our parameter data
   welcome_param['placeholder'] = 'placeholder'; // We need this placeholder
-  conv.contexts.set('home', 1, welcome_param); // We need to insert data into the 'home' context for the home fallback to trigger!
+  conv.contexts.set('Welcome', 1, welcome_param); // We need to insert data into the 'home' context for the home fallback to trigger!
+
+  if (conv.contexts.Welcome) {
+    //const test = conv.contexts['Welcome'].value;
+    console.log(`WELCOME CONTEXT PRESENT! ${conv.contexts.Welcome}`);
+  } else {
+    console.log("NOPE!");
+  }
+
+  console.log(util.inspect(conv, false, null));
 
   const textToSpeech = `<speak>` +
     `<emphasis level="moderate">Hey, welcome to Beyond Bitshares!</emphasis> <break time="0.375s" /> ` +
@@ -1236,7 +1254,7 @@ app.intent('Committee.One', (conv, { committee_member }) => {
   conv.user.storage.fallbackCount = 0; // Required for tracking fallback attempts!
   const parameter = {}; // The dict which will hold our parameter data
   parameter['placeholder'] = 'placeholder'; // We need this placeholder
-  conv.contexts.set('get_committee_member', 1, parameter); // Need to set the data
+  conv.contexts.set('Committee.One', 1, parameter); // Need to set the data
 
   const intent_fallback_messages = [
     "Invalid committee input, please retry your committee search.",
@@ -1245,7 +1263,7 @@ app.intent('Committee.One', (conv, { committee_member }) => {
   ];
 
   if (typeof committee_member !== 'undefined' && (committee_member.length > 1)) {
-    if ('1.5.' in committee_member) {
+    if (committee_member.indexOf('1.5.') !== -1) {
       console.log(`COMMITTEE ID ENTERED! ${committee_member}`);
       const qs_input_one = {
         committee_id: committee_member,
@@ -2862,7 +2880,7 @@ function genericFallback(conv, intent_name, fallback_messages) {
   console.warn("GENERIC FALLBACK TRIGGERED!");
   const fallback_name = intent_name + '_Fallback';
 
-  console.log(util.inspect(conv, false, null))
+  console.log(util.inspect(conv, false, null));
 
   console.log(`Generic fallback count: ${conv.user.storage.fallbackCount}`);
 
@@ -2877,7 +2895,7 @@ function genericFallback(conv, intent_name, fallback_messages) {
       fallback_name, // input_intent
       'Fail' // win_or_fail
     );
-    conv.close("Unfortunately, Beyond Bitshares was unable to understand user input. Sorry for the inconvenience, let's try again later though? Goodbye.");
+    return conv.close("Unfortunately, Beyond Bitshares was unable to understand user input. Sorry for the inconvenience, let's try again later though? Goodbye.");
   } else {
     // Within fallback attempt limit (<3)
     console.log("HANDLED FALLBACK!");
